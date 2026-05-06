@@ -13,6 +13,14 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Shippori+Mincho:wght@400;700&display=swap');
 
+/* ▼▼▼ 追加したアニメーション設定 ▼▼▼ */
+@keyframes spirit-alive {
+  0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+  33% { transform: translateY(-8px) rotate(2deg) scale(1.03); }
+  66% { transform: translateY(-4px) rotate(-2deg) scale(0.97); }
+}
+/* ▲▲▲ 演出設定終わり ▲▲▲ */
+
 :root {
   --washi: #0f0e16; --washi2: #161422; --sumi: #1a1510; --sumi2: #2d2620;
   --border: rgba(180,160,255,0.12); --aka: #e8002a; --seiji: #2ab8d4;
@@ -21,27 +29,11 @@
   --msg-border: rgba(180,150,255,0.3); --affection-color: #e87ca0;
   --char-a-accent: #7b9fff; --char-b-accent: #ff8c6b;
 }
-
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 html,body { height:100%; }
 body { background: #0e0a14; color: var(--text); font-family: 'Noto Serif JP', serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 
-/* ▼▼▼ 追加した演出アニメーション ▼▼▼ */
-@keyframes spirit-alive {
-  0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-  33% { transform: translateY(-8px) rotate(2deg) scale(1.03); }
-  66% { transform: translateY(-4px) rotate(-2deg) scale(0.97); }
-}
-
-.card svg {
-  width:82%; height:88%; display:block;
-  animation: spirit-alive 4s ease-in-out infinite;
-  animation-delay: var(--float-delay, 0s);
-  transform-origin: center;
-}
-/* ▲▲▲ 修正終わり ▲▲▲ */
-
-/* (以降、元のスタイルをそのまま維持) */
+/* (中略：既存スタイル) */
 #char-select { position: fixed; inset: 0; z-index: 350; display: none; background: linear-gradient(160deg, #0e0a14 0%, #1a1030 100%); flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px 24px; text-align: center; }
 .cs-title { font-family: 'Shippori Mincho', serif; font-size: 13px; letter-spacing: 6px; color: rgba(255,255,255,0.4); }
 .cs-subtitle { font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700; letter-spacing: 4px; color: #fff; text-shadow: 0 0 30px rgba(180,150,255,0.4); }
@@ -62,6 +54,16 @@ body { background: #0e0a14; color: var(--text); font-family: 'Noto Serif JP', se
 .card { background: transparent; border: none; border-right: 1px solid rgba(180,160,255,0.08); border-bottom: 1px solid rgba(180,160,255,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: visible; position: relative; }
 .card:nth-child(3n+1) { border-left: none; }
 .card:nth-child(-n+3) { border-top: none; }
+
+/* ▼▼▼ ここを更新：ふわふわアニメーション適用 ▼▼▼ */
+.card svg {
+  width:82%; height:88%; display:block;
+  animation: spirit-alive 4s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  transform-origin: center;
+}
+/* ▲▲▲ ここまで更新 ▲▲▲ */
+
 #title-screen { position: fixed; inset: 0; z-index: 400; background: linear-gradient(160deg, #050310 0%, #0e0a1e 50%, #060210 100%); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
 .title-content { display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 1; }
 .title-kanji { font-family: 'Shippori Mincho', serif; font-size: 88px; font-weight: 700; color: #fff; text-shadow: 0 0 60px rgba(180,150,255,0.5); }
@@ -69,21 +71,18 @@ body { background: #0e0a14; color: var(--text); font-family: 'Noto Serif JP', se
 </style>
 </head>
 <body>
-<div id="title-screen"><div class="title-content"><div class="title-kanji">組</div><div class="title-tap-hint">タップして始める</div></div></div>
-<div id="char-select" style="display:none"><div class="cs-title">― 組 KUMI ―</div><div id="char-cards-wrap"></div></div>
-<div id="game-ui"><div id="char-area"><div id="hud"><div class="hud-pill"><span class="lbl">組</span><span id="score">0</span></div></div><div id="char-img"><div class="char-bust" id="char-bust">🧑‍🦯</div></div><div id="msg-window"><div class="msg-name" id="msg-name">如月 蒼</div><div id="msg-text">…</div></div></div><div id="game-area"><div id="board-wrap"><div id="board"></div></div></div></div>
-
 <script>
 // 【重要】render関数を修正版に差し替えています
 function render(){
-  const bd=document.getElementById('board');bd.innerHTML='';
+  const bd=document.getElementById('board');
+  bd.innerHTML='';
   board.forEach((card,i)=>{
-    const div=document.createElement('div');div.className='card';
+    const div=document.createElement('div');
+    div.className='card';
     const svg=makeShape(card);
     
-    // 【更新】アニメーションの開始タイミングをランダムにずらす（-4秒〜0秒の間）
-    const delay = (-Math.random() * 4).toFixed(1) + 's';
-    svg.style.setProperty('--float-delay', delay);
+    // 【更新】各カードのSVGにランダムな遅延を適用
+    svg.style.setProperty('--float-delay', (-Math.random() * 4).toFixed(1) + 's');
     
     div.appendChild(svg);
     div.addEventListener('click',()=>pick(i));
@@ -92,7 +91,7 @@ function render(){
   if(findSets(board).length===0) ensure();
 }
 
-// （※ここに元の全関数：startGame, pick, submit, ensure, makeShape など、以前のコードの残りの部分をすべて記載してください）
+// （以下、バックアップファイルの script タグ内のすべての関数をそのまま残してください）
 </script>
 </body>
 </html>
