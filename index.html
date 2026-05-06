@@ -156,7 +156,7 @@ body {
   position: absolute;
   left: 50%; transform: translateX(-50%);
   width: 100%;
-  transition: transform .3s;
+  transition: none;
 }
 #char-img .char-bust img {
   width: 100%;
@@ -167,23 +167,23 @@ body {
 #char-img.react-good .char-bust { animation: charHappy 0.5s ease; }
 #char-img.react-bad  .char-bust { animation: charSad 0.5s ease; }
 @keyframes charHappy {
-  0%   { transform: translateY(0); }
-  30%  { transform: translateY(-12px); }
-  60%  { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
+  0%   { transform: translateX(-50%) translateY(0); }
+  30%  { transform: translateX(-50%) translateY(-12px); }
+  60%  { transform: translateX(-50%) translateY(-6px); }
+  100% { transform: translateX(-50%) translateY(0); }
 }
 @keyframes charSad {
-  0%   { transform: translateX(0);   filter: brightness(1); }
-  10%  { transform: translateX(-5px); filter: brightness(2.5); }
-  20%  { transform: translateX(5px);  filter: brightness(1); }
-  30%  { transform: translateX(-5px); filter: brightness(2.5); }
-  40%  { transform: translateX(5px);  filter: brightness(1); }
-  50%  { transform: translateX(-4px); filter: brightness(2.0); }
-  60%  { transform: translateX(4px);  filter: brightness(1); }
-  70%  { transform: translateX(-3px); filter: brightness(1.5); }
-  80%  { transform: translateX(3px);  filter: brightness(1); }
-  90%  { transform: translateX(-1px); }
-  100% { transform: translateX(0);   filter: brightness(1); }
+  0%   { transform: translateX(-50%);        filter: brightness(1); }
+  10%  { transform: translateX(calc(-50% - 5px)); filter: brightness(2.5); }
+  20%  { transform: translateX(calc(-50% + 5px)); filter: brightness(1); }
+  30%  { transform: translateX(calc(-50% - 5px)); filter: brightness(2.5); }
+  40%  { transform: translateX(calc(-50% + 5px)); filter: brightness(1); }
+  50%  { transform: translateX(calc(-50% - 4px)); filter: brightness(2.0); }
+  60%  { transform: translateX(calc(-50% + 4px)); filter: brightness(1); }
+  70%  { transform: translateX(calc(-50% - 3px)); filter: brightness(1.5); }
+  80%  { transform: translateX(calc(-50% + 3px)); filter: brightness(1); }
+  90%  { transform: translateX(calc(-50% - 1px)); }
+  100% { transform: translateX(-50%);        filter: brightness(1); }
 }
 
 /* 背景光 */
@@ -421,9 +421,14 @@ body {
   100% { background: rgba(18,14,30,0.25); }
 }
 .card.correct {
-  border-color: var(--seiji);
-  box-shadow: 0 0 0 2px var(--seiji), 0 0 16px rgba(61,110,99,.25);
-  animation: fc .6s ease;
+  animation: dissolve 0.55s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes dissolve {
+  0%   { opacity:1; transform:scale(1);    filter:brightness(1) blur(0px); }
+  25%  { opacity:1; transform:scale(1.05); filter:brightness(4) blur(0px); }
+  55%  { opacity:0.6; transform:scale(1.12); filter:brightness(2) blur(3px); }
+  100% { opacity:0; transform:scale(1.2);  filter:brightness(1) blur(8px); }
 }
 .card.wrong {
   border-color: var(--aka) !important;
@@ -431,7 +436,6 @@ body {
   border-radius: 4px;
   animation: sk .4s ease;
 }
-@keyframes fc { 0%,100%{background:rgba(255,255,255,0.75);}40%{background:rgba(220,240,235,0.9);} }
 @keyframes sk { 0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}60%{transform:translateX(6px)} }
 .card svg {
   width:82%; height:88%; display:block;
