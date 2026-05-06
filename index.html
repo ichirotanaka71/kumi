@@ -450,6 +450,20 @@ body {
   0%,100% { transform: scale(1.0); }
   50%      { transform: scale(var(--float-scale, 1.07)); }
 }
+/* 漂う（ゆっくり上下） */
+@keyframes floatDrift {
+  0%,100% { transform: translateY(0px) scale(1.0); }
+  30%     { transform: translateY(var(--drift-y, -6px)) scale(1.02); }
+  70%     { transform: translateY(calc(var(--drift-y, -6px) * -0.5)) scale(0.99); }
+}
+/* 小刻みに揺れる */
+@keyframes trembleIcon {
+  0%,100% { transform: rotate(0deg) scale(1.0); }
+  20%     { transform: rotate(var(--tremble-r, 2deg)) scale(1.02); }
+  40%     { transform: rotate(calc(var(--tremble-r, 2deg) * -1)) scale(0.99); }
+  60%     { transform: rotate(calc(var(--tremble-r, 2deg) * 0.7)) scale(1.01); }
+  80%     { transform: rotate(calc(var(--tremble-r, 2deg) * -0.4)) scale(1.0); }
+}
 
 /* 選択ドット */
 #bottom-dots {
@@ -905,7 +919,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.06 14:37</div>
+      <div style="position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.06 19:52</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1090,15 +1104,19 @@ function setCharImage(el, char, faceRatio){
   const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
     el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
+    // 2段階rAFでレイアウト確定後に計算
     requestAnimationFrame(()=>{
-      const img = el.querySelector('img');
-      if(!img) return;
-      const areaH = el.offsetHeight;
-      const imgH = img.offsetHeight;
-      const faceY = char.faceY || 0.12;
-      const targetY = areaH * ratio;
-      const faceAbsY = imgH * faceY;
-      img.style.marginTop = (targetY - faceAbsY) + 'px';
+      requestAnimationFrame(()=>{
+        const img = el.querySelector('img');
+        if(!img) return;
+        const areaH = el.offsetHeight;
+        const imgH = img.offsetHeight;
+        if(!areaH || !imgH) return;
+        const faceY = char.faceY || 0.12;
+        const targetY = areaH * ratio;
+        const faceAbsY = imgH * faceY;
+        img.style.marginTop = (targetY - faceAbsY) + 'px';
+      });
     });
   } else {
     el.innerHTML = '';
@@ -2312,13 +2330,30 @@ function render(){
   board.forEach((card,i)=>{
     const div=document.createElement('div');div.className='card';
     const svg=makeShape(card);
-    // 呼吸アニメのパラメータ（周期・位相・スケールをカードごとにランダム）
-    const dur = (3.5 + Math.random() * 2.0).toFixed(1) + 's';
-    const delay = (-Math.random() * 4).toFixed(1) + 's';
-    const scale = (1.05 + Math.random() * 0.04).toFixed(2);
-    svg.style.setProperty('--float-dur', dur);
-    svg.style.setProperty('--float-delay', delay);
-    svg.style.setProperty('--float-scale', scale);
+    // ランダムにアニメパターンを割り当て（0:呼吸 1:漂う 2:揺れる）
+    const pattern = Math.floor(Math.random() * 3);
+    const dur = (3.5 + Math.random() * 2.5).toFixed(1) + 's';
+    const delay = (-Math.random() * 5).toFixed(1) + 's';
+    svg.style.animationDelay = delay;
+    svg.style.animationDuration = dur;
+    if(pattern === 0){
+      // 拡大縮小
+      const scale = (1.05 + Math.random() * 0.05).toFixed(2);
+      svg.style.setProperty('--float-scale', scale);
+      svg.style.animationName = 'breatheIcon';
+    } else if(pattern === 1){
+      // 漂う
+      const driftY = (-(4 + Math.random() * 6)).toFixed(1) + 'px';
+      svg.style.setProperty('--drift-y', driftY);
+      svg.style.animationName = 'floatDrift';
+      svg.style.animationTimingFunction = 'ease-in-out';
+    } else {
+      // 揺れる
+      const r = (1.5 + Math.random() * 2).toFixed(1) + 'deg';
+      svg.style.setProperty('--tremble-r', r);
+      svg.style.animationName = 'trembleIcon';
+      svg.style.animationTimingFunction = 'ease-in-out';
+    }
     div.appendChild(svg);
     div.addEventListener('click',()=>pick(i));
     bd.appendChild(div);
