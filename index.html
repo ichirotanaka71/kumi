@@ -134,14 +134,16 @@ body {
 /* ══════════════════════════════════════
    ゲーム画面
 ══════════════════════════════════════ */
-#game-ui { display:none; flex:1; flex-direction:column; min-height:0; }
+#game-ui { display:none; flex:1; flex-direction:column; min-height:0; position:relative; }
 #game-ui.show { display:flex; }
 
-/* ── 上半分：キャラエリア ── */
+/* ── キャラを背景として全画面に敷く ── */
 #char-area {
-  flex: 0 0 52%;
-  position: relative; overflow: hidden;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
   background: linear-gradient(170deg, #0e0a14 0%, #1a1030 60%, #0e0a14 100%);
+  z-index: 0;
 }
 
 /* キャラ画像 */
@@ -212,7 +214,7 @@ body {
 /* 好感度バー */
 #affection-bar-wrap {
   position: absolute; bottom: 56px; left: 16px; right: 16px;
-  z-index: 10;
+  z-index: 20;
 }
 .aff-top-row {
   display: flex; align-items: center; gap: 6px;
@@ -349,23 +351,27 @@ body {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 .msg-loading { opacity: 0.5; font-style: italic; font-size: 11px; }
 
-/* ── 下半分：ゲームエリア ── */
+/* ── 下半分：ゲームエリア（手前に重ねる）── */
 #game-area {
-  flex: 1 1 0; min-height: 0;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 52%;
   background: transparent;
   display: flex; flex-direction: column;
-  position: relative;
+  z-index: 10;
 }
-/* 和紙テクスチャ無効 */
+/* 下からのグラデーション（グリッドの視認性UP） */
 #game-area::before {
-  display: none;
   content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(8,6,16,0.75) 30%, rgba(8,6,16,0.92) 100%);
+  pointer-events: none; z-index: 0;
   position: absolute; inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events: none; z-index: 0;
 }
 
-#board-wrap { flex:1 1 0; min-height:0; padding:5px 6px; display:flex; position:relative; z-index:1; background: transparent; }
+#board-wrap { flex:1 1 0; min-height:0; padding:5px 6px; display:flex; position:relative; z-index:2; background: transparent; }
 #board {
   display: grid;
   grid-template-columns: repeat(3,1fr);
