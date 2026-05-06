@@ -421,14 +421,17 @@ body {
   100% { background: rgba(18,14,30,0.25); }
 }
 .card.correct {
-  animation: dissolve 0.55s ease-out forwards;
   pointer-events: none;
 }
-@keyframes dissolve {
-  0%   { opacity:1; transform:scale(1);    filter:brightness(1) blur(0px); }
-  25%  { opacity:1; transform:scale(1.05); filter:brightness(4) blur(0px); }
-  55%  { opacity:0.6; transform:scale(1.12); filter:brightness(2) blur(3px); }
-  100% { opacity:0; transform:scale(1.2);  filter:brightness(1) blur(8px); }
+.card.correct svg {
+  animation: exorcise 0.65s ease-out forwards !important;
+}
+@keyframes exorcise {
+  0%   { opacity:1; transform:scale(1);    filter:brightness(1); }
+  20%  { opacity:1; transform:scale(1.05); filter:brightness(4) drop-shadow(0 0 12px #fff); }
+  40%  { opacity:0.9; transform:scale(1.1); filter:brightness(8) drop-shadow(0 0 20px #fff) saturate(0); }
+  65%  { opacity:0.5; transform:scale(1.18); filter:brightness(12) drop-shadow(0 0 30px #fff) saturate(0) blur(2px); }
+  100% { opacity:0;   transform:scale(1.3);  filter:brightness(20) blur(8px) saturate(0); }
 }
 .card.wrong {
   border-color: var(--aka) !important;
@@ -902,7 +905,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.06 14:27</div>
+      <div style="position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.06 14:37</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1893,6 +1896,52 @@ function soundEpilogue(){
   crystal(987.77, 0.07, 0.15);
   crystal(1174.66, 0.05, 0.3);
 }
+function soundZuba(){
+  // ズバッ：鋭いアタック＋高音スラッシュ
+  const c = ac(), now = c.currentTime;
+
+  // ノイズバースト（ズバの「ズ」部分）
+  const bufLen = c.sampleRate * 0.08;
+  const buf = c.createBuffer(1, bufLen, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i = 0; i < bufLen; i++){
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (c.sampleRate * 0.015));
+  }
+  const noise = c.createBufferSource();
+  noise.buffer = buf;
+  const hpf = c.createBiquadFilter();
+  hpf.type = 'highpass'; hpf.frequency.value = 2000;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.6, now);
+  ng.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  noise.connect(hpf); hpf.connect(ng); ng.connect(c.destination);
+  noise.start(now); noise.stop(now + 0.09);
+
+  // 高音スラッシュ（バッの部分）
+  [1200, 2400, 4800].forEach((f, i) => {
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f * 1.5, now);
+    osc.frequency.exponentialRampToValueAtTime(f * 0.3, now + 0.12);
+    g.gain.setValueAtTime(0.25, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.16);
+  });
+
+  // 浄化音（祓いの余韻）
+  [523, 784, 1047].forEach((f, i) => {
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    const t = now + 0.1 + i * 0.06;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t); osc.stop(t + 0.65);
+  });
+}
+
 function soundCorrect(){
   const c=ac(), now=c.currentTime;
   // ほわ〜っと上昇する浄化音
@@ -2313,7 +2362,8 @@ function submit(){
     score++;document.getElementById('score').textContent=score;
     changeAffection(+2);
     charReact('good');
-    setTimeout(soundCorrect, 80);
+    soundZuba();
+    setTimeout(soundCorrect, 120);
     speakAI('correct',null);
     clearHint();
     startCountdown();
