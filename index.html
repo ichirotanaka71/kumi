@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>組 -KUMI-</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0e0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="組">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Shippori+Mincho:wght@400;700&display=swap');
+
+:root {
+  --washi: #0f0e16;
+  --washi2: #161422;
+  --sumi: #1a1510;
+  --sumi2: #2d2620;
+  --border: rgba(180,160,255,0.12);
+  --aka: #e8002a;
+  --seiji: #2ab8d4;
+  --yamabuki: #c8e832;
+  --kin: #c8e832;
+  --muted: #6a6a8a;
+  --text: #c8c0e0;
+
+  /* 乙女ゲーム用 */
+  --overlay-bg: rgba(10,6,20,0.55);
+  --msg-bg: rgba(10,6,20,0.82);
+  --msg-border: rgba(180,150,255,0.3);
+  --affection-color: #e87ca0;
+  --char-a-accent: #7b9fff;  /* 蒼 */
+  --char-b-accent: #ff8c6b;  /* 緋 */
+}
+
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; }
+body {
+  background: #0e0a14;
+  color: var(--text);
+  font-family: 'Noto Serif JP', serif;
+  height: 100dvh;
+  display: flex; flex-direction: column; overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ══════════════════════════════════════
+   キャラ選択画面
+══════════════════════════════════════ */
+#char-select {
+  position: fixed; inset: 0; z-index: 350;
+  display: none;
+  background: linear-gradient(160deg, #0e0a14 0%, #1a1030 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px; padding: 40px 24px;
+  text-align: center;
+}
+.cs-title {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 13px; letter-spacing: 6px;
+  color: rgba(255,255,255,0.4);
+}
+.cs-subtitle {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 22px; font-weight: 700; letter-spacing: 4px;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(180,150,255,0.4);
+}
+.char-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px; width: 100%; max-width: 360px;
+  overflow-y: auto; max-height: 52vh;
+}
+.char-cards::-webkit-scrollbar { display: none; }
+.char-card {
+  flex: 1; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  background: rgba(255,255,255,0.04);
+}
+.char-card:active { transform: scale(.96); }
+.char-card.a { box-shadow: 0 0 0 0 var(--char-a-accent); }
+.char-card.b { box-shadow: 0 0 0 0 var(--char-b-accent); }
+.char-card:hover.a { box-shadow: 0 0 20px rgba(123,159,255,0.3); border-color: rgba(123,159,255,0.4); }
+.char-card:hover.b { box-shadow: 0 0 20px rgba(255,140,107,0.3); border-color: rgba(255,140,107,0.4); }
+
+.char-portrait-placeholder {
+  width: 100%; aspect-ratio: 2/3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px;
+  position: relative; overflow: hidden;
+}
+.char-card.a .char-portrait-placeholder {
+  background: linear-gradient(170deg, #141830 0%, #1e2545 100%);
+}
+.char-card.b .char-portrait-placeholder {
+  background: linear-gradient(170deg, #1e1008 0%, #2d1a10 100%);
+}
+/* シルエット風の装飾 */
+.char-portrait-placeholder::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 40%;
+  background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+}
+
+.char-info {
+  padding: 10px 12px 14px;
+  background: rgba(0,0,0,0.3);
+}
+.char-name {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 15px; font-weight: 700;
+  color: #fff; letter-spacing: 2px;
+}
+.char-name-sub {
+  font-size: 9px; letter-spacing: 3px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+.char-aff {
+  font-size: 11px; font-weight: 700;
+  margin-top: 4px; letter-spacing: 1px;
+  font-family: 'Shippori Mincho', serif;
+}
+.char-card.a .char-name { color: #a8bfff; }
+.char-card.b .char-name { color: #ffb09a; }
+
+/* ══════════════════════════════════════
+   ゲーム画面
+══════════════════════════════════════ */
+#game-ui { display:none; flex:1; flex-direction:column; min-height:0; }
+#game-ui.show { display:flex; }
+
+/* ── 上半分：キャラエリア ── */
+#char-area {
+  flex: 0 0 48%;
+  position: relative; overflow: hidden;
+  background: linear-gradient(170deg, #0e0a14 0%, #1a1030 60%, #0e0a14 100%);
+}
+
+/* キャラ画像（プレースホルダー） */
+#char-img {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: filter .4s;
+}
+#char-img .char-bust {
+  font-size: 200px; line-height: 1;
+  filter: drop-shadow(0 -10px 40px rgba(180,150,255,0.2));
+  transition: transform .3s;
+}
+#char-img .char-bust img {
+  height: 100%;
+  max-height: 260px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 30px rgba(123,159,255,0.3));
+}
+#char-img.react-good .char-bust { animation: charHappy .4s ease; }
+#char-img.react-bad  .char-bust { animation: charSad .4s ease; }
+@keyframes charHappy { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes charSad   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+/* 背景光 */
+#char-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 80%, var(--char-glow, rgba(123,159,255,0.12)) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ヘッダー情報（キャラエリア上に重ねる） */
+#hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 8px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+}
+.hud-pill {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; color: rgba(255,255,255,0.8);
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Noto Serif JP', serif;
+  backdrop-filter: blur(4px);
+}
+#hud-lives {
+  font-size: 13px; letter-spacing: 1px;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 2px 8px;
+  backdrop-filter: blur(4px);
+}
+.hud-pill .lbl { font-size: 8px; color: rgba(255,255,255,0.4); }
+#btn-mute {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 3px 9px;
+  font-size: 13px; cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+/* 好感度バー */
+#affection-bar-wrap {
+  position: absolute; bottom: 56px; left: 16px; right: 16px;
+  z-index: 10;
+}
+.aff-top-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px; position: relative;
+}
+.aff-label {
+  font-size: 9px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  font-family: 'Shippori Mincho', serif;
+  flex-shrink: 0;
+}
+#aff-hearts {
+  font-size: 14px;
+  color: var(--affection-color);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+#aff-num {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--affection-color);
+  min-width: 28px;
+}
+#aff-hearts.pulse { animation: heartPulse .35s ease; }
+@keyframes heartPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+.aff-delta {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px; font-weight: 700;
+  position: absolute; right: 0;
+  opacity: 0; pointer-events: none;
+  transition: none;
+}
+.aff-delta.pop-up {
+  animation: deltaPopUp .9s ease forwards;
+  color: #ffb3cc;
+}
+.aff-delta.pop-down {
+  animation: deltaPopDown .9s ease forwards;
+  color: #ff6b6b;
+}
+@keyframes deltaPopUp {
+  0%   { opacity:1; transform: translateY(0); }
+  80%  { opacity:1; transform: translateY(-18px); }
+  100% { opacity:0; transform: translateY(-22px); }
+}
+@keyframes deltaPopDown {
+  0%   { opacity:1; transform: translateY(0); }
+  80%  { opacity:1; transform: translateY(-14px); }
+  100% { opacity:0; transform: translateY(-18px); }
+}
+.aff-track {
+  height: 5px; background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: visible; position: relative;
+}
+#aff-bar {
+  height: 100%; width: 50%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--affection-color), #ffb3cc);
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+#aff-bar::after {
+  content: '';
+  position: absolute; right: -1px; top: -2px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #ffb3cc;
+  box-shadow: 0 0 6px rgba(255,179,204,0.8);
+  transition: opacity .3s;
+}
+#aff-bar.flash {
+  animation: barFlash .4s ease;
+}
+#aff-bar.flash-down {
+  animation: barFlashDown .4s ease;
+}
+@keyframes barFlash {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(1.8) drop-shadow(0 0 6px #ffb3cc); }
+}
+@keyframes barFlashDown {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(0.6) drop-shadow(0 0 4px #ff6b6b); }
+}
+
+/* カウントダウンバー */
+#countdown-wrap {
+  display: none; /* HUDのタイマーに統合したので非表示 */
+  position: absolute; bottom: 38px; left: 16px; right: 16px;
+  z-index: 10;
+}
+.cd-label { font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 3px; font-family: 'Shippori Mincho', serif; }
+.cd-track { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+#cd-bar {
+  height: 100%; width: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #7b9fff, #b06bff);
+  transition: width .5s linear;
+}
+#cd-bar.danger { background: linear-gradient(90deg, #ff6b6b, #ff3b5c); }
+
+/* セリフウィンドウ */
+#msg-window {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--msg-bg);
+  border-top: 1px solid var(--msg-border);
+  padding: 6px 16px 8px;
+  height: 52px; /* 1行固定：名前行14px + テキスト1行24px + padding */
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  transition: opacity .4s;
+  overflow: hidden;
+}
+#msg-window.hide { opacity: 0; pointer-events: none; }
+.msg-name {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 10px; letter-spacing: 3px;
+  margin-bottom: 2px;
+}
+#msg-text {
+  font-size: 13px; color: rgba(255,255,255,0.9);
+  line-height: 1.7; letter-spacing: .5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.msg-cursor {
+  display: inline-block; width: 8px; height: 8px;
+  border-right: 2px solid rgba(255,255,255,0.6);
+  border-bottom: 2px solid rgba(255,255,255,0.6);
+  transform: rotate(45deg); margin-left: 4px;
+  animation: blink .8s infinite;
+  vertical-align: middle;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.msg-loading { opacity: 0.5; font-style: italic; font-size: 11px; }
+
+/* ── 下半分：ゲームエリア ── */
+#game-area {
+  flex: 1 1 0; min-height: 0;
+  background: #0c0b14;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+/* 和紙テクスチャ */
+#game-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+#board-wrap { flex:1 1 0; min-height:0; padding:5px 6px; display:flex; position:relative; z-index:1; }
+#board {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  grid-template-rows: repeat(3,1fr);
+  gap: 0px; flex:1; min-height:0;
+}
+
+.card {
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(180,160,255,0.08);
+  border-bottom: 1px solid rgba(180,160,255,0.08);
+  border-radius: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; overflow: visible;
+  transition: transform .12s, background .15s;
+  min-height:0; min-width:0;
+  position: relative;
+}
+/* 左端・上端の線を消す（gridで右・下のみ引く） */
+.card:nth-child(3n+1) { border-left: none; }
+.card:nth-child(-n+3) { border-top: none; }
+.card::before { display: none; }
+.card:active { transform: scale(.93); }
+.card.selected {
+  border-color: rgba(200,180,255,0.4) !important;
+  border-width: 1px !important;
+  animation: selectedPulse 1.4s ease-in-out infinite !important;
+  border-radius: 4px;
+}
+@keyframes selectedPulse {
+  0%   { background: rgba(120,100,180,0.35); }
+  30%  { background: rgba(60,50,100,0.55); }
+  100% { background: rgba(18,14,30,0.25); }
+}
+.card.correct {
+  border-color: var(--seiji);
+  box-shadow: 0 0 0 2px var(--seiji), 0 0 16px rgba(61,110,99,.25);
+  animation: fc .6s ease;
+}
+.card.wrong {
+  border-color: var(--aka) !important;
+  box-shadow: 0 0 8px var(--aka);
+  border-radius: 4px;
+  animation: sk .4s ease;
+}
+@keyframes fc { 0%,100%{background:rgba(255,255,255,0.75);}40%{background:rgba(220,240,235,0.9);} }
+@keyframes sk { 0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}60%{transform:translateX(6px)} }
+.card svg {
+  width:82%; height:88%; display:block;
+  animation: breatheIcon var(--float-dur, 4s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  transform-origin: center;
+}
+@keyframes breatheIcon {
+  0%,100% { transform: scale(1.0); }
+  50%      { transform: scale(var(--float-scale, 1.07)); }
+}
+
+/* 選択ドット */
+#bottom-dots {
+  flex: 0 0 auto; padding: 3px 0 4px;
+  display: flex; gap: 6px; justify-content: center;
+  background: #0c0b14; position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+}
+.dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.2); transition:background .2s, transform .2s; }
+.dot.on { background: rgba(255,255,255,0.85); transform:scale(1.3); }
+
+/* ══════════════════════════════════════
+   クリアオーバーレイ
+══════════════════════════════════════ */
+#overlay {
+  display:none; position:fixed; inset:0;
+  background: rgba(10,6,20,0.9); backdrop-filter:blur(14px);
+  z-index:200; align-items:center; justify-content:center;
+  flex-direction:column; gap:16px; text-align:center; padding:32px;
+}
+#overlay.show { display:flex; }
+.ov-char { font-size:80px; margin-bottom:-8px; }
+.ov-title { font-family:'Shippori Mincho',serif; font-size:26px; font-weight:700; letter-spacing:6px; color:#fff; }
+.ov-msg { color:rgba(255,255,255,0.7); font-size:13px; line-height:1.8; max-width:280px; }
+.ov-score { font-family:'Shippori Mincho',serif; font-size:52px; color:var(--kin); line-height:1; }
+.ov-score span { font-size:16px; color:rgba(255,255,255,0.4); }
+.ov-aff {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--affection-color); letter-spacing: 1px;
+}
+.ov-hearts { font-size: 18px; letter-spacing: 2px; }
+#btn-restart {
+  background: rgba(255,255,255,0.1); color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 13px 0; border-radius: 8px;
+  font-size: 14px; font-family: 'Shippori Mincho', serif;
+  width: 100%; max-width: 220px; flex:none; letter-spacing: 5px;
+  backdrop-filter: blur(4px);
+}
+
+/* ── キャラ選択画面のスタート ── */
+#start-btn-wrap { margin-top: 4px; }
+#btn-title-start {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; padding: 8px 32px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 5px; cursor: pointer;
+}
+
+/* 除霊パーティクル */
+.exorcise-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999;
+  animation: particleFly var(--dur) ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { transform: translate(0,0) scale(1); opacity: 0.9; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+/* デバッグ */
+.dbg-btn {
+  background: rgba(255,80,80,0.15);
+  color: rgba(255,180,180,0.8);
+  border: 1px solid rgba(255,80,80,0.3);
+  border-radius:4px; padding: 6px 10px;
+  font-size: 11px; letter-spacing: 1px;
+  cursor: pointer; font-family: 'Noto Serif JP', serif;
+  text-align: left;
+}
+.dbg-btn:active { opacity: .7; }
+
+/* ポーズ画面 */
+#pause-screen {
+  display: none;
+  position: fixed; inset: 0; z-index: 180;
+  background: rgba(10,6,20,0.96);
+  backdrop-filter: blur(12px);
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0;
+}
+#pause-screen.show { display: flex; }
+.pause-char {
+  font-size: 120px;
+  flex: 1;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 0;
+  animation: pauseCharIn .4s ease forwards;
+}
+@keyframes pauseCharIn {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.pause-msg-window {
+  width: 100%;
+  background: rgba(10,6,20,0.9);
+  border-top: 1px solid rgba(180,150,255,0.2);
+  padding: 16px 20px 10px;
+}
+.pause-msg-name {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.4); margin-bottom: 8px;
+}
+.pause-msg-text {
+  font-size: 15px; color: rgba(255,255,255,0.9);
+  line-height: 1.8; letter-spacing: .5px;
+  min-height: 48px;
+}
+#btn-resume {
+  flex: 0 0 auto;
+  margin: 16px 0 24px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  padding: 13px 0; width: 220px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px; letter-spacing: 5px;
+  cursor: pointer;
+}
+#btn-pause, #btn-voice {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 3px 9px;
+  font-size: 13px; cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+/* ダメージ演出 */
+#damage-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(200,0,30,0.0);
+  pointer-events: none;
+  transition: none;
+}
+#damage-overlay.flash {
+  animation: damageFlash 0.5s ease-out forwards;
+}
+@keyframes damageFlash {
+  0%   { background: rgba(200,0,30,0.55); }
+  40%  { background: rgba(200,0,30,0.3); }
+  100% { background: rgba(200,0,30,0.0); }
+}
+#damage-number {
+  position: fixed;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: #ff2244;
+  text-shadow: 0 0 20px rgba(255,0,50,0.8), 2px 2px 0 #000;
+  pointer-events: none;
+  z-index: 501;
+  display: none;
+  letter-spacing: 2px;
+}
+#damage-number.pop {
+  display: block;
+  animation: damageNumPop 0.8s ease-out forwards;
+}
+@keyframes damageNumPop {
+  0%   { transform: scale(1.4) translateY(0); opacity: 1; }
+  60%  { transform: scale(1.0) translateY(-30px); opacity: 1; }
+  100% { transform: scale(0.8) translateY(-60px); opacity: 0; }
+}
+#char-img.damage-shake {
+  animation: charDamageShake 0.5s ease !important;
+}
+@keyframes charDamageShake {
+  0%,100% { transform: translateX(0) rotate(0deg); }
+  15%  { transform: translateX(-12px) rotate(-3deg); }
+  30%  { transform: translateX(10px) rotate(2deg); }
+  45%  { transform: translateX(-8px) rotate(-2deg); }
+  60%  { transform: translateX(6px) rotate(1deg); }
+  75%  { transform: translateX(-4px) rotate(-1deg); }
+}
+
+/* ヒント明滅 */
+@keyframes hintPulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,0), 0 0 0px rgba(255,255,255,0); }
+  50%      { box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.4); }
+}
+.card.hint-glow {
+  animation: hintPulse 1.2s ease-in-out infinite !important;
+  border-color: rgba(255,255,255,0.6) !important;
+  border-radius: 4px;
+}
+
+/* リシャッフル通知 */
+#reshuffle-notice {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(242,237,228,0.92);
+  display: none; align-items: center; justify-content: center;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px; letter-spacing: 4px; color: var(--muted);
+}
+#reshuffle-notice.show { display: flex; }
+
+/* ══ タイトル画面 ══ */
+#title-screen {
+  position: fixed; inset: 0; z-index: 400;
+  background: linear-gradient(160deg, #050310 0%, #0e0a1e 50%, #060210 100%);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+#title-screen.hide {
+  animation: titleFadeOut .8s ease forwards;
+  pointer-events: none;
+}
+@keyframes titleFadeOut {
+  to { opacity: 0; transform: scale(1.04); }
+}
+.title-content {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px; z-index: 1;
+  animation: titleIn 1.2s ease forwards;
+}
+@keyframes titleIn {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.title-kamon { width: 70px; height: 70px; animation: titleRotate 20s linear infinite; }
+@keyframes titleRotate { to { transform: rotate(360deg); } }
+.title-main { text-align: center; }
+.title-sub-top {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 5px;
+  color: rgba(180,150,255,0.5); margin-bottom: 8px;
+}
+.title-kanji {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 88px; font-weight: 700; line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 60px rgba(180,150,255,0.5), 0 0 20px rgba(180,150,255,0.3);
+  letter-spacing: 8px;
+}
+.title-roma {
+  font-size: 11px; letter-spacing: 8px;
+  color: rgba(255,255,255,0.35); margin-top: 6px;
+}
+.title-sub-bottom {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 3px;
+  color: rgba(180,150,255,0.4); margin-top: 10px;
+}
+.title-tap-hint {
+  font-size: 10px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.25);
+  animation: blink 1.5s infinite;
+}
+/* パーティクル（人魂風） */
+.title-particles {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.particle {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,150,255,0.8) 0%, transparent 70%);
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: .6; }
+  50%  { transform: translateY(-40vh) translateX(var(--dx)) scale(.7); opacity: .4; }
+  100% { transform: translateY(-80vh) translateX(calc(var(--dx)*2)) scale(.3); opacity: 0; }
+}
+
+/* ══ 導入ストーリー ══ */
+#intro-story {
+  display: none; position: fixed; inset: 0; z-index: 350;
+  background: #0e0a14;
+  flex-direction: column;
+}
+#intro-story.show { display: flex; }
+.intro-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(180,150,255,0.1) 0%, transparent 70%);
+}
+.intro-char-area {
+  flex: 1; display: flex; align-items: flex-end; justify-content: center;
+  font-size: 100px; position: relative; z-index: 1;
+  padding-bottom: 0;
+}
+.intro-msg-window {
+  flex: 0 0 auto;
+  background: rgba(10,6,20,0.9);
+  border-top: 1px solid rgba(180,150,255,0.2);
+  padding: 16px 20px 24px;
+  position: relative; z-index: 1;
+  min-height: 130px;
+}
+.intro-msg-name {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.45); margin-bottom: 8px;
+}
+.intro-msg-text {
+  font-size: 15px; color: rgba(255,255,255,0.9);
+  line-height: 1.9; letter-spacing: .5px;
+  height: 86px; /* 3行固定 */
+  overflow: hidden;
+}
+.intro-tap-hint {
+  font-size: 9px; letter-spacing: 3px;
+  color: rgba(255,255,255,0.2);
+  text-align: right; margin-top: 8px;
+  animation: blink 1.2s infinite;
+}
+.intro-progress {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px;
+}
+.intro-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,0.12); transition: background .3s;
+}
+.intro-dot.on { background: rgba(180,150,255,0.6); }
+
+/* ══ ゲームオーバー ══ */
+/* ゲームオーバー */
+#gameover {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: linear-gradient(160deg, #0e0a14 0%, #1a0808 100%);
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; text-align: center; padding: 40px;
+}
+#gameover.show { display: flex; }
+.go-char { font-size: 80px; filter: grayscale(1) opacity(.5); }
+.go-title {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 28px; font-weight: 700; letter-spacing: 8px;
+  color: rgba(255,255,255,0.5);
+}
+.go-msg { color: rgba(255,255,255,0.5); font-size: 13px; line-height: 1.8; max-width: 260px; }
+.go-hearts { font-size: 20px; color: rgba(255,100,100,0.4); letter-spacing: 4px; }
+.go-lives-info { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 2px; font-family: 'Shippori Mincho', serif; }
+#btn-retry {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 12px 0; border-radius: 6px;
+  font-size: 13px; font-family: 'Shippori Mincho', serif;
+  width: 100%; max-width: 200px; letter-spacing: 4px; cursor: pointer;
+}
+
+/* エピローグ */
+#epilogue {
+  display: none; position: fixed; inset: 0; z-index: 250;
+  background: #0e0a14;
+  flex-direction: column;
+}
+#epilogue.show { display: flex; }
+.ep-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(180,150,255,0.15) 0%, transparent 70%);
+}
+.ep-char-img {
+  flex: 1; display: flex; align-items: flex-end; justify-content: center;
+  font-size: 110px; padding-bottom: 0; position: relative; z-index: 1;
+  animation: epCharIn .8s ease forwards;
+}
+@keyframes epCharIn {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.ep-msg-window {
+  flex: 0 0 auto;
+  background: rgba(10,6,20,0.88);
+  border-top: 1px solid rgba(180,150,255,0.25);
+  padding: 16px 20px 20px;
+  position: relative; z-index: 1;
+  min-height: 130px;
+}
+.ep-msg-name {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.5); margin-bottom: 8px;
+}
+.ep-msg-text {
+  font-size: 15px; color: rgba(255,255,255,0.92);
+  line-height: 1.9; letter-spacing: .5px; min-height: 56px;
+}
+.ep-tap-hint {
+  font-size: 9px; letter-spacing: 3px;
+  color: rgba(255,255,255,0.25);
+  text-align: right; margin-top: 8px;
+  animation: blink 1.2s infinite;
+}
+.ep-progress {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px; z-index: 2;
+}
+.ep-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background .3s;
+}
+.ep-dot.on { background: rgba(180,150,255,0.7); }
+</style>
+</head>
+<body>
+
+<!-- ══ チュートリアル ══ -->
+<div id="tutorial" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(10,6,20,0.97);flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:40px;text-align:center;">
+  <div style="font-family:'Shippori Mincho',serif;font-size:10px;letter-spacing:4px;color:rgba(180,150,255,0.5)">初めての方へ</div>
+  <div id="tut-title" style="font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:3px"></div>
+  <div id="tut-body" style="font-size:15px;color:rgba(255,255,255,0.8);line-height:1.9;max-width:280px;letter-spacing:.5px"></div>
+  <div id="tut-step" style="font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:3px"></div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:3px;animation:blink 1.5s infinite">タップで次へ</div>
+</div>
+
+<!-- ══ タイトル画面 ══ -->
+<div id="title-screen">
+  <div class="title-particles" id="title-particles"></div>
+  <div class="title-content">
+    <div class="title-kamon">
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(180,150,255,0.4)" stroke-width="0.8"/>
+        <circle cx="30" cy="30" r="20" fill="none" stroke="rgba(180,150,255,0.25)" stroke-width="0.5"/>
+        <circle cx="30" cy="30" r="3" fill="rgba(180,150,255,0.6)"/>
+        <line x1="30" y1="2" x2="30" y2="58" stroke="rgba(180,150,255,0.2)" stroke-width="0.5"/>
+        <line x1="2" y1="30" x2="58" y2="30" stroke="rgba(180,150,255,0.2)" stroke-width="0.5"/>
+        <line x1="10" y1="10" x2="50" y2="50" stroke="rgba(180,150,255,0.15)" stroke-width="0.4"/>
+        <line x1="50" y1="10" x2="10" y2="50" stroke="rgba(180,150,255,0.15)" stroke-width="0.4"/>
+      </svg>
+    </div>
+    <div class="title-main">
+      <div class="title-sub-top">お祓い師の</div>
+      <div class="title-kanji">組</div>
+      <div class="title-roma">K U M I</div>
+      <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
+    </div>
+    <div class="title-tap-hint">タップして始める</div>
+  </div>
+</div>
+
+<!-- ══ キャラ選択画面 ══ -->
+<div id="char-select" style="display:none">
+  <div style="position:absolute;top:16px;right:16px;">
+    <button id="btn-voice-cs" onclick="toggleVoice()" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:15px;cursor:pointer;backdrop-filter:blur(4px);">🔇</button>
+  </div>
+  <div class="cs-title">― 組 KUMI ―</div>
+  <div class="cs-subtitle">依頼人</div>
+  <div id="char-cards-wrap"></div>
+  <div id="preview-icons" style="display:flex;gap:20px;align-items:center;opacity:0.6;margin-top:4px;"></div>
+  <div class="cs-title" style="font-size:10px">― 三種の組み合わせを見つけよ ―</div>
+
+  <!-- デバッグパネル -->
+  <div id="debug-panel" style="margin-top:12px;">
+    <button id="btn-debug-toggle" style="font-size:10px;letter-spacing:2px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px 12px;cursor:pointer;">DEBUG</button>
+    <div id="debug-content" style="display:none;margin-top:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;display:none;flex-direction:column;gap:6px;width:260px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-bottom:4px;">― DEBUG ―</div>
+      <button class="dbg-btn" onclick="debugResetAll()">全データリセット</button>
+      <button class="dbg-btn" onclick="debugResetAffection()">好感度リセット（全員→20）</button>
+      <button class="dbg-btn" onclick="debugResetChapters()">章の進行リセット（全員）</button>
+      <div id="debug-status" style="font-size:10px;color:rgba(100,255,100,0.7);min-height:14px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ゲーム画面 ══ -->
+<div id="game-ui">
+
+  <!-- 上半分：キャラ -->
+  <div id="char-area">
+    <div id="hud">
+      <div class="hud-pill">
+        <span class="lbl">組</span>
+        <span id="score">0</span>
+      </div>
+      <div class="hud-pill" id="cd-pill">
+        <span class="lbl">残</span>
+        <span id="timer">20</span>
+      </div>
+      <div class="hud-pill" id="hud-lives">🔥🔥🔥🔥🔥</div>
+      <button id="btn-mute">🔔</button>
+      <button id="btn-pause">⏸</button>
+      <button id="btn-voice">🔇</button>
+    </div>
+
+    <div id="char-img">
+      <div class="char-bust" id="char-bust">🧑‍🦯</div>
+    </div>
+
+    <div id="affection-bar-wrap">
+      <div class="aff-top-row">
+        <div class="aff-label">好感度</div>
+        <div id="aff-hearts">♡</div>
+        <div id="aff-num">20</div>
+        <div id="aff-delta" class="aff-delta"></div>
+      </div>
+      <div class="aff-track"><div id="aff-bar"></div></div>
+    </div>
+
+    <div id="countdown-wrap">
+      <div class="cd-label">次の組まで</div>
+      <div class="cd-track"><div id="cd-bar"></div></div>
+    </div>
+
+    <div id="msg-window">
+      <div class="msg-name" id="msg-name">如月 蒼</div>
+      <div id="msg-text"><span class="msg-loading">…</span></div>
+    </div>
+  </div>
+
+  <!-- 下半分：ゲーム -->
+  <div id="game-area">
+    <div id="reshuffle-notice">札を切り直します…</div>
+    <div id="board-wrap"><div id="board"></div></div>
+    <div id="bottom-dots">
+      <div class="dot" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ポーズ画面 -->
+<div id="pause-screen">
+  <div class="pause-char" id="pause-char-img"></div>
+  <div class="pause-msg-window">
+    <div class="pause-msg-name" id="pause-char-name"></div>
+    <div class="pause-msg-text" id="pause-msg-text">…</div>
+  </div>
+  <button id="btn-resume">再開する</button>
+</div>
+
+<!-- ダメージ演出 -->
+<div id="damage-overlay"></div>
+<div id="damage-number">MISS</div>
+
+<!-- ══ ゲームオーバー画面 ══ -->
+<div id="gameover">
+  <div class="go-char" id="go-char">🧑‍🦯</div>
+  <div class="go-title">縁切れ</div>
+  <div class="go-msg" id="go-msg">…</div>
+  <div class="go-hearts">♡♡♡♡♡</div>
+  <div class="go-lives-info" id="go-lives"></div>
+  <button id="btn-retry">もう一度</button>
+</div>
+
+<!-- ══ 導入ストーリー ══ -->
+<div id="intro-story">
+  <div class="intro-bg"></div>
+  <div class="intro-char-area">
+    <span id="intro-char-emoji">🧑‍🦯</span>
+  </div>
+  <div class="intro-msg-window">
+    <div class="intro-msg-name" id="intro-char-name">如月 蒼</div>
+    <div id="intro-msg-text" class="intro-msg-text"></div>
+    <div class="intro-tap-hint">タップで続ける</div>
+    <div class="intro-progress">
+      <span id="intro-dot-0" class="intro-dot on"></span>
+      <span id="intro-dot-1" class="intro-dot"></span>
+      <span id="intro-dot-2" class="intro-dot"></span>
+      <span id="intro-dot-3" class="intro-dot"></span>
+      <span id="intro-dot-4" class="intro-dot"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ エピローグ画面 ══ -->
+<div id="epilogue">
+  <div class="ep-bg"></div>
+  <div id="ep-char-img" class="ep-char-img"></div>
+  <div id="ep-msg-window" class="ep-msg-window">
+    <div class="ep-msg-name" id="ep-msg-name">如月 蒼</div>
+    <div id="ep-msg-text" class="ep-msg-text"></div>
+    <div class="ep-tap-hint">タップで続ける</div>
+  </div>
+  <div class="ep-progress">
+    <span id="ep-dot-0" class="ep-dot on"></span>
+    <span id="ep-dot-1" class="ep-dot"></span>
+    <span id="ep-dot-2" class="ep-dot"></span>
+    <span id="ep-dot-3" class="ep-dot"></span>
+    <span id="ep-dot-4" class="ep-dot"></span>
+  </div>
+</div>
+
+<!-- ══ クリアオーバーレイ ══ -->
+<div id="overlay">
+  <div class="ov-char" id="ov-char">🧑‍🦯</div>
+  <div class="ov-title">除霊完了</div>
+  <div class="ov-msg" id="ov-msg">…</div>
+  <div class="ov-score" id="fscore">0<span> 組</span></div>
+  <div class="ov-aff">
+    <span>好感度</span>
+    <span class="ov-hearts" id="ov-hearts">♡</span>
+    <span id="ov-aff-num" style="font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;color:var(--affection-color);min-width:32px;">0</span>
+  </div>
+  <button id="btn-restart">戻 る</button>
+</div>
+
+<script>
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
+
+// ══ Web Speech API ══════════════════════════════════════
+let voiceEnabled = false; // デフォルトOFF
+let _voices = [];
+
+// 音声リスト読み込み
+function loadVoices(){
+  _voices = window.speechSynthesis.getVoices();
+}
+if(window.speechSynthesis){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function getJapaneseVoice(){
+  // 日本語音声を優先選択
+  return _voices.find(v => v.lang === 'ja-JP' && v.localService) ||
+         _voices.find(v => v.lang === 'ja-JP') ||
+         _voices.find(v => v.lang.startsWith('ja')) ||
+         null;
+}
+
+function speakText(text){
+  if(!voiceEnabled) return;
+  if(!window.speechSynthesis) return;
+  // 読み上げ中なら止める
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'ja-JP';
+  utt.rate = 0.9;
+  utt.pitch = 1.0;
+  utt.volume = 0.9;
+  const voice = getJapaneseVoice();
+  if(voice) utt.voice = voice;
+  window.speechSynthesis.speak(utt);
+}
+
+function toggleVoice(){
+  voiceEnabled = !voiceEnabled;
+  const icon = voiceEnabled ? '🔊' : '🔇';
+  // HUDのボタン
+  const btn = document.getElementById('btn-voice');
+  if(btn) btn.textContent = icon;
+  // 依頼人選択画面のボタン
+  const btnCs = document.getElementById('btn-voice-cs');
+  if(btnCs) btnCs.textContent = icon;
+
+  if(!voiceEnabled && window.speechSynthesis){
+    window.speechSynthesis.cancel();
+  } else if(voiceEnabled){
+    const warmup = new SpeechSynthesisUtterance('');
+    warmup.volume = 0;
+    window.speechSynthesis.speak(warmup);
+    loadVoices();
+  }
+}
+
+// ══ デバッグ機能 ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn = document.getElementById('btn-debug-toggle');
+  const panel = document.getElementById('debug-content');
+  if(btn && panel){
+    btn.addEventListener('click',()=>{
+      const isOpen = panel.style.display === 'flex';
+      panel.style.display = isOpen ? 'none' : 'flex';
+    });
+  }
+});
+
+function debugResetAll(){
+  try {
+    Object.keys(CHARS).forEach(k=>{
+      localStorage.removeItem('kumi_aff_'+k);
+      localStorage.removeItem('kumi_chapters_'+k);
+    });
+    localStorage.removeItem('kumi_launched');
+    document.getElementById('debug-status').textContent = '✓ 全データをリセットしました';
+    refreshCharCards();
+    setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
+  } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
+}
+
+function debugResetAffection(){
+  try {
+    Object.keys(CHARS).forEach(k=>{
+      localStorage.setItem('kumi_aff_'+k, 0);
+    });
+    document.getElementById('debug-status').textContent = '✓ 好感度を0にリセットしました';
+    refreshCharCards();
+    setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
+  } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
+}
+
+function debugResetChapters(){
+  try {
+    Object.keys(CHARS).forEach(k=>{
+      localStorage.removeItem('kumi_chapters_'+k);
+    });
+    document.getElementById('debug-status').textContent = '✓ 章の進行をリセットしました';
+    setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
+  } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
+}
+
+// ══ タイトル画面 ══════════════════════════════════════
+function showTitle(){
+  const t = document.getElementById('title-screen');
+  t.classList.remove('hide');
+  t.style.display='flex';
+  spawnParticles();
+}
+
+function checkFirstLaunch(){
+  try {
+    if(!localStorage.getItem('kumi_launched')){
+      localStorage.setItem('kumi_launched','1');
+      return true;
+    }
+  } catch(e){}
+  return false;
+}
+
+function spawnParticles(){
+  const wrap = document.getElementById('title-particles');
+  wrap.innerHTML='';
+  for(let i=0;i<12;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    const size = 4 + Math.random()*8;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*30}%;
+      --dx:${(Math.random()-0.5)*80}px;
+      animation-duration:${4+Math.random()*6}s;
+      animation-delay:${Math.random()*4}s;
+    `;
+    wrap.appendChild(p);
+  }
+}
+
+document.getElementById('title-screen').addEventListener('click',()=>{
+  const t=document.getElementById('title-screen');
+  t.classList.add('hide');
+  setTimeout(()=>{ t.style.display='none'; },800);
+  document.getElementById('char-select').style.display='flex';
+  document.getElementById('char-select').style.zIndex='350';
+});
+
+// ══ 導入ストーリー ══════════════════════════════════════
+let introLines=[], introIdx=0;
+
+// 好感度別フォールバックセリフ
+const INTRO_FALLBACK = {
+  // 初対面（好感度20以下）
+  first: {
+    a:['…あんたが、お祓い師か。','目は見えない。だが最近、見えないはずのものが見える。','霊、というものらしい。俺には関係ない話のはずだった。','もう疲れた。早く、元の暗闇に戻りたい。','頼む。祓ってくれ。'],
+    b:['あの、突然すみません！','お祓い師さんやって聞いて、来てしもたんですけど…','ここ最近ずっと変なことが起きてて、もうどうしたらええか。','夜中に物音がしたり、金縛りになったりで。','お願いします！助けてください！'],
+    c:['失礼します。お祓い師の方でしょうか。','少し、相談があるのですが。','最近…不思議なことが続いていまして。','どうか、力をお貸しください。','よろしくお願いいたします。'],
+    d:['…来たか。','また怪異が騒がしくなってきた。','お前に頼むほかない。','感情的な話は抜きだ。','祓ってくれ。'],
+    e:['来てくれたか！','実は深刻な状況でな。','屋敷に何かいる気がしてならない。','頼れるのはお前だけだ。','よろしく頼む。'],
+    f:['やあ、待っていたよ。','また怪異に悩まされている。','君のような使い手が必要だ。','詳細は後で話そう。','早速頼めるか。'],
+    g:['お〜、来た来た！','また変なの出てきちゃってさ。','笑えない感じなんだよね。','ちょっと助けてほしいんだけど。','よろしくね〜。'],
+  },
+  // 再会（好感度21以上）
+  again: {
+    a:['…また来たか。','まだいる。あいつが。','早く終わらせたい気持ちは…変わらない、はずだ。','頼む。','…始めよう。'],
+    b:['また頼むで！','やっぱりお前しかおらんな。','今回もよろしく！','一緒やったら怖くないわ。','さあ、いこか！'],
+    c:['また来てくださったのですね。','引き続きお力をお借りできますか。','あなたがいると心強い。','よろしくお願いします。','始めましょう。'],
+    d:['また来たか。','悪いな、何度も。','…頼りにしている。','余計なことは言わない。','始めよう。'],
+    e:['来てくれたか、助かる。','まだ完全には収まっていないんだ。','また一緒に当たってほしい。','信頼している。','よし、行こう。'],
+    f:['また頼めるかい。','君がいると安心する。','今回もよろしく。','早速始めよう。','期待しているよ。'],
+    g:['また来てくれた〜！','もう仲間やん笑','今回もよろしく！','一人じゃ無理やった。','さあさあ、やろ！'],
+  }
+};
+
+async function startIntroStory(){
+  const isFirst = affection === 0;
+
+  // 2回目以降は導入ストーリーをスキップしてそのままゲーム開始
+  if(!isFirst){
+    const key = currentCharKey || 'a';
+    const lines = INTRO_FALLBACK.again[key] || INTRO_FALLBACK.again.a;
+    // 短い再会セリフを1行だけメッセージウィンドウに出してゲーム開始
+    startGame();
+    speakAI('start', null);
+    return;
+  }
+
+  // 初回のみイントロストーリー表示
+  const el=document.getElementById('intro-story');
+  el.classList.add('show');
+  const introEmoji = document.getElementById('intro-char-emoji');
+  if(currentChar.illustration){
+    introEmoji.innerHTML = `<img src="${currentChar.illustration}" style="height:180px;width:auto;object-fit:contain;filter:drop-shadow(0 0 20px rgba(123,159,255,0.3))">`;
+  } else {
+    introEmoji.textContent = currentChar.emoji;
+  }
+  document.getElementById('intro-char-name').textContent=currentChar.name;
+  const introTextEl=document.getElementById('intro-msg-text');
+  introTextEl.innerHTML='<span class="msg-loading">…</span>';
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:300,
+        system:`あなたは乙女ゲームのキャラクター「${currentChar.name}」です。性格：${currentChar.personality}。世界観：主人公はお祓い師。あなたは怪異に憑かれて困っている依頼人。初めてお祓い師に助けを求めるシーン。必ずJSON配列で5つのセリフのみ返してください。例：["セリフ1","セリフ2","セリフ3","セリフ4","セリフ5"]`,
+        messages:[{role:'user',content:'怪異に憑かれ困っているキャラクターが、お祓い師に初めて助けを求める導入シーンを5行で。'}]
+      })
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'["…","…","…","…","…"]';
+    try{ introLines=JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){ introLines=null; }
+    if(!Array.isArray(introLines)||introLines.length===0) introLines=null;
+  } catch(e){ introLines=null; }
+
+  if(!introLines){
+    const key = currentCharKey || 'a';
+    introLines = INTRO_FALLBACK.first[key] || INTRO_FALLBACK.first.a;
+  }
+  introIdx=0;
+  showIntroLine();
+  el.addEventListener('click',onIntroTap);
+}
+
+function showIntroLine(){
+  const text=introLines[introIdx]||'';
+  const el=document.getElementById('intro-msg-text');
+  el.textContent='';
+  let i=0;
+  const iv=setInterval(()=>{ el.textContent+=text[i++]; if(i>=text.length){ clearInterval(iv); speakText(text); } },40);
+  for(let d=0;d<5;d++) document.getElementById('intro-dot-'+d).classList.toggle('on',d===introIdx);
+}
+
+function onIntroTap(){
+  introIdx++;
+  if(introIdx>=introLines.length){
+    document.getElementById('intro-story').removeEventListener('click',onIntroTap);
+    document.getElementById('intro-story').classList.remove('show');
+    startGame();
+    speakAI('start',null);
+  } else {
+    showIntroLine();
+  }
+}
+
+
+// ══ キャラ設定（7人・同世界護、領域違い）══════════════
+const CHARS = {
+  a: {
+    name: '如月 蒼',
+    emoji: '🧑‍🦯',
+    illustration: 'data:image/jpeg;base64,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',
+    accent: '#7b9fff',
+    glow: 'rgba(123,159,255,0.14)',
+    domain: '水の領域',
+    haunting: '生まれつき盲目だがある日から霊だけが見えるようになった。霊の存在が重荷で、早く普通の暗闇に戻りたいと願っている',
+    personality: '盲目の青年。言葉少なく静かだが意志は強い。霊が見えることを重荷に感じ疲弊しているが、感情を表に出すのが苦手で素直になれない。依頼当初は「早く終わらせたい」という一心だが、霊と過ごすうちに愛着が芽生え、祓うことへの迷いが生じる。最終的には霊を「目の代わり」として共に生きることを選ぶ。セリフは短く、感情を抑えた話し方。',
+  },
+  b: {
+    name: '朱鷺 緋',
+    emoji: '🧑‍🦱',
+    accent: '#ff8c6b',
+    glow: 'rgba(255,140,107,0.14)',
+    domain: '炎の領域',
+    haunting: '炎の怨霊に追われている',
+    personality: '熱血で明るく少しやんちゃな青年。関西弁混じりでテンションが高め。',
+  },
+  c: {
+    name: '白鷺 静',
+    emoji: '🧑‍🦳',
+    accent: '#c8f0ff',
+    glow: 'rgba(200,240,255,0.12)',
+    domain: '風の領域',
+    haunting: '嵐を呼ぶ風神の怒りを買った',
+    personality: '物静かで礼儀正しい。古風な話し方をする穏やかな青年。',
+  },
+  d: {
+    name: '黒羽 玄',
+    emoji: '🧑‍🦲',
+    accent: '#b06bff',
+    glow: 'rgba(176,107,255,0.14)',
+    domain: '闇の領域',
+    haunting: '夜ごと闇の怪異に囚われ眠れない',
+    personality: 'ミステリアスで謎めいた雰囲気。短い言葉に深い意味を込める。',
+  },
+  e: {
+    name: '土御門 葵',
+    emoji: '🧑',
+    accent: '#7bff9f',
+    glow: 'rgba(123,255,159,0.12)',
+    domain: '大地の領域',
+    haunting: '屋敷の地縛霊に苦しめられている',
+    personality: '責任感が強くしっかり者。頼り甲斐があるが不器用な面も見せる。',
+  },
+  f: {
+    name: '鳳 煌',
+    emoji: '🧑‍🎤',
+    accent: '#ffd166',
+    glow: 'rgba(255,209,102,0.14)',
+    domain: '光の領域',
+    haunting: '先祖の怨念が光を歪め視界を乱す',
+    personality: '華やかで自信家だが根は繊細。プライドが高く素直になれない。',
+  },
+  g: {
+    name: '霧島 銀',
+    emoji: '🧔',
+    accent: '#a0c4ff',
+    glow: 'rgba(160,196,255,0.12)',
+    domain: '霧の領域',
+    haunting: '山の霧に宿る魔に道を迷わされ続ける',
+    personality: '飄々として掴みどころがない。軽口が多いが要所で真剣になる。',
+  },
+};
+
+const CHAR_KEYS = Object.keys(CHARS);
+
+let currentChar = null;
+let affection = 0; // 0~100
+let cdInterval = null;
+let cdRemain = 20;
+let msgQueue = [];
+let isSpeaking = false;
+
+// ══ ライフシステム ══════════════════════════════════════
+const MAX_LIVES = 5;
+const LIFE_REGEN_MS = 60 * 60 * 1000; // 1時間
+let lives = MAX_LIVES;
+let hintRevealed = 0; // 0=なし, 1=1枚光, 2=2枚光, 3=3枚光
+
+// ══ 章システム ══════════════════════════════════════════
+// 好感度帯 → 章インデックス（0=Op,1〜6=第1〜6章,7=Ed）
+// 各章の解放好感度閾値（初期値20から開始、各章15ポイント差）
+// 第1章:20, 第2章:30, 第3章:42, 第4章:54, 第5章:66, 第6章:78, Ed:90
+// 1クリアの好感度上昇は最大+約12（9組正解）なので最低8回程度かかる
+// 各章15pt差、1クリア最大+18なので最低2クリア/章
+const CHAPTER_THRESHOLDS = [0, 20, 35, 50, 65, 75, 85, 93];
+// Op(0)は導入ストーリーで使用済み。クリア後は章1〜7(Ed)を管理
+// viewedChapters[charKey] = [視聴済み章インデックスの配列]
+
+function loadViewedChapters(charKey){
+  try {
+    const s = localStorage.getItem('kumi_chapters_'+charKey);
+    return s ? JSON.parse(s) : [];
+  } catch(e){ return []; }
+}
+function saveViewedChapters(charKey, viewed){
+  try {
+    localStorage.setItem('kumi_chapters_'+charKey, JSON.stringify(viewed));
+  } catch(e){}
+}
+
+// 好感度で解放される章インデックス（1〜7）を返す
+function unlockedChapterIdx(aff){
+  const a = aff !== undefined ? aff : affection;
+  for(let i=CHAPTER_THRESHOLDS.length-1; i>=1; i--){
+    if(a >= CHAPTER_THRESHOLDS[i]) return i;
+  }
+  return 0; // 好感度0なら章なし
+}
+
+// クリア後に再生すべき未視聴章リストを返す
+function getChaptersToPlay(charKey){
+  const viewed = loadViewedChapters(charKey);
+  const unlocked = unlockedChapterIdx();
+  const toPlay = [];
+  for(let i=1; i<=unlocked; i++){
+    if(!viewed.includes(i)) toPlay.push(i);
+  }
+  return toPlay;
+}
+
+const CHAPTER_NAMES = ['Op','第一章','第二章','第三章','第四章','第五章','第六章','結章（Ed）'];
+// キャラ別章テーマ
+const CHAPTER_THEMES_BY_CHAR = {
+  a: [
+    '', // Op
+    '初対面。蒼は疲れ果てた様子で「早く終わらせてくれ」と言う。目が見えないのに霊だけが見える、その重荷を初めて口にする。',
+    '霊との距離が縮まり始める。蒼は戸惑いながらも、霊の存在を少しずつ意識するようになる。',
+    '霊が蒼のそばを離れないことに気づく。「なぜ離れない」と問う蒼。霊の想いが少しずつ伝わってくる。',
+    '蒼が「祓わなくていいかもしれない」と初めて迷いを見せる。あなたに黙ったまま、霊と話すようになっていた。',
+    '霊が蒼の「目」になっていることが明らかになる。蒼は「こいつがいれば、暗くない」とぽつりと言う。',
+    '祓いの直前。蒼はまだ迷っている。「本当にこれでいいのか」と自分に問い続けている。',
+    'あなたが霊にとどめを刺そうとした瞬間、蒼が「待て」と言う。静かだが、確かな声で。霊と共に生きることを選んだ。',
+  ],
+  default: [
+    '',
+    '初めての出会い。依頼人と初対面し、怪異の気配を感じ取った。',
+    '怪異の正体が少しずつ見えてくる。依頼人との距離が縮まり始める。',
+    '怪異の影響が強まる。依頼人の過去が明かされる。',
+    '祓いの本番が近づく。二人の絆が試される。',
+    '怪異との決戦前夜。依頼人の真の想いが溢れ出す。',
+    '決戦。全てをかけて怪異に立ち向かう。',
+    '怪異を祓い、全てが終わった。依頼人からの感謝と、別れ。',
+  ]
+};
+
+function getChapterTheme(charKey, chIdx){
+  const themes = CHAPTER_THEMES_BY_CHAR[charKey] || CHAPTER_THEMES_BY_CHAR.default;
+  return themes[chIdx] || themes[themes.length-1];
+}
+
+const CHAPTER_THEMES = CHAPTER_THEMES_BY_CHAR.default; // 後方互換
+
+function loadLives(){
+  lives = MAX_LIVES;
+}
+
+function loadAffection(charKey){
+  try {
+    const v = localStorage.getItem('kumi_aff_'+charKey);
+    return v !== null ? parseInt(v) : 0;
+  } catch(e){ return 20; }
+}
+function saveAffection(charKey){
+  try {
+    localStorage.setItem('kumi_aff_'+charKey, affection);
+  } catch(e){}
+}
+
+function saveLives(){
+  // 時間回復なし・保存不要
+}
+
+function loseLife(){
+  if(lives > 0) lives--;
+  updateLivesUI();
+  if(lives <= 0){
+    setTimeout(triggerGameOver, 500);
+  }
+}
+
+function updateLivesUI(){
+  const el = document.getElementById('hud-lives');
+  if(!el) return;
+  let h = '';
+  for(let i=0;i<MAX_LIVES;i++) h += i < lives ? '🔥' : '🩶';
+  el.textContent = h;
+}
+
+function nextLifeIn(){
+  return '';
+}
+
+let currentCharKey = 'a';
+
+function selectChar(id) {
+  currentCharKey = id;
+  currentChar = CHARS[id];
+  // そのキャラの好感度を読み込む
+  affection = loadAffection(id);
+  document.getElementById('char-select').style.display='none';
+  document.getElementById('game-ui').classList.add('show');
+  const bustEl = document.getElementById('char-bust');
+  if(currentChar.illustration){
+    bustEl.innerHTML = '<img src="' + currentChar.illustration + '" alt="' + currentChar.name + '" style="height:100%;max-height:260px;width:auto;object-fit:contain;filter:drop-shadow(0 0 30px rgba(123,159,255,0.3))">';
+  } else {
+    bustEl.textContent = currentChar.emoji;
+  }
+  document.getElementById('msg-name').textContent = currentChar.name;
+  document.getElementById('ov-char').textContent = currentChar.emoji;
+  document.querySelector('#char-area').style.setProperty('--char-glow', currentChar.glow);
+  document.getElementById('btn-mute').style.borderColor = currentChar.accent + '44';
+  updateAffBar();
+  startBGM();
+  startIntroStory();
+}
+
+// ══ AI セリフ生成 ══════════════════════════════════════
+async function speakAI(trigger, extra) {
+  const prompts = {
+    start:    `ゲーム開始。プレイヤーに向けて「さあ始めるぞ」という一言。`,
+    correct:  `組を1つ見つけた！称賛と励ましの一言。好感度${affection}%を意識して。${extra||''}`,
+    wrong:    `組の選択を間違えた。軽く残念がる一言。好感度${affection}%を意識して。${extra||''}`,
+    timeout:  `20秒以内に組を見つけられなかった。焦らせる一言。`,
+    clear:    `ゲームクリア！全部で${extra}組見つけた。成績に応じて褒めるセリフ。`,
+    gameover: `好感度が0になってゲームオーバー。プレイヤーへの別れの一言。20文字以内。`,
+  };
+  const msgEl = document.getElementById('msg-text');
+  msgEl.innerHTML = '<span class="msg-loading">…</span>';
+  document.getElementById('msg-window').classList.remove('hide');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 80,
+        system: `あなたは乙女ゲームの攻略対象キャラクター「${currentChar.name}」です。性格：${currentChar.personality}。セリフのみを返してください。20文字以内で簡潔に。地の文不要。`,
+        messages: [{ role: 'user', content: prompts[trigger] }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text?.trim() || 'ふむ…';
+    typewriter(text);
+  } catch(e) {
+    // フォールバック
+    const fallbacks = {
+      start:   { a:'…頼む。早く終わらせてくれ。', b:'いくで！頑張ろな！', c:'よろしくお願いします。', d:'…始めるか。', e:'準備はいいか。', f:'さあ、見せてもらおう。', g:'ま、やってみようか。' },
+      correct: { a:'…一つ、減った。', b:'ええやん！その調子！', c:'素晴らしい。', d:'…正解だ。', e:'よし、その調子だ。', f:'なかなかやるな。', g:'おっ、やるじゃん。' },
+      wrong:   { a:'…まだか。', b:'あかん…もう一回！', c:'もう一度落ち着いて。', d:'…違う。', e:'気を取り直せ。', f:'まだまだだな。', g:'ドンマイドンマイ。' },
+      timeout: { a:'…来るな。早く。', b:'はよせんか！', c:'急いでください。', d:'…遅い。', e:'急げ！', f:'もたもたするな。', g:'そろそろやばいよ？' },
+      clear:   { a:'…終わったか。ありがとう。', b:'やったな！最高やで！', c:'ありがとうございました。', d:'…助かった。', e:'お疲れ様だ。', f:'さすがだな。', g:'やるじゃんやるじゃん！' },
+      gameover:{ a:'…またいつか。', b:'また頼むで。', c:'お気をつけて。', d:'…縁があればまた。', e:'また来てくれ。', f:'次こそ頼む。', g:'またね～。' },
+    };
+    const key = Object.keys(CHARS).find(k=>CHARS[k]===currentChar) || 'a';
+    typewriter((fallbacks[trigger]||{})[key] || '…');
+  }
+}
+
+let _twInterval = null;
+let _twFullText = '';
+let _twHideTimer = null;
+
+function typewriter(text) {
+  // 前のタイプライターを即停止
+  if(_twInterval) { clearInterval(_twInterval); _twInterval = null; }
+  if(_twHideTimer) { clearTimeout(_twHideTimer); _twHideTimer = null; }
+
+  // ウィンドウを表示
+  const win = document.getElementById('msg-window');
+  if(win) win.classList.remove('hide');
+
+  _twFullText = text;
+  const el = document.getElementById('msg-text');
+  el.textContent = '';
+  let i = 0;
+
+  _twInterval = setInterval(() => {
+    if(i >= text.length) {
+      clearInterval(_twInterval); _twInterval = null; _twFullText = '';
+      el.textContent = text;
+      // 読み上げ
+      speakText(text);
+      // 読み上げ完了 or 2秒後にウィンドウを隠す
+      const hideFn = ()=>{ if(win) win.classList.add('hide'); _twHideTimer=null; };
+      if(voiceEnabled && window.speechSynthesis){
+        // 読み上げ時間に合わせて消す（最低2秒）
+        const estDur = Math.max(2000, text.length * 120);
+        _twHideTimer = setTimeout(hideFn, estDur);
+      } else {
+        _twHideTimer = setTimeout(hideFn, 2000);
+      }
+      return;
+    }
+    el.textContent = text.slice(0, ++i);
+  }, 48);
+}
+
+// ══ Audio ══════════════════════════════════════════════
+let ctx=null;
+function ac(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx;}
+function marimba(freq,vol=0.2,delay=0,dur=0.8){
+  const c=ac(),t=c.currentTime+delay;
+  [[1,vol,dur],[2.01,vol*0.3,dur*0.5],[3.0,vol*0.1,dur*0.3]].forEach(([r,v,d])=>{
+    const o=c.createOscillator(),g=c.createGain();
+    o.type='sine';o.frequency.value=freq*r;
+    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d);
+  });
+}
+function crystal(freq,vol=0.1,delay=0){
+  const c=ac(),t=c.currentTime+delay;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type='sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.05);
+  g.gain.exponentialRampToValueAtTime(0.001,t+2.0);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+2.1);
+}
+
+let bgmNodes=[],bgmGain=null,rhythmTimeout=null,bgmRunning=false,muted=false;
+function startBGM(){
+  if(bgmRunning)return; bgmRunning=true;
+  const c=ac();
+  bgmGain=c.createGain(); bgmGain.gain.value=muted?0:1.0; bgmGain.connect(c.destination);
+  const droneFreqs=[110,146.83,164.81,220];
+  droneFreqs.forEach((freq,i)=>{
+    const osc=c.createOscillator(),g=c.createGain();
+    osc.type='sine';osc.frequency.value=freq;
+    const lfo=c.createOscillator(),lfoG=c.createGain();
+    lfo.frequency.value=0.06+i*0.02;lfoG.gain.value=0.3;
+    lfo.connect(lfoG);lfoG.connect(osc.frequency);lfo.start();
+    g.gain.value=[0.06,0.04,0.03,0.02][i];
+    osc.connect(g);g.connect(bgmGain);osc.start();
+    bgmNodes.push(osc,lfo);
+  });
+  // チキチキリズムなし
+  const ryukyu=[261.63,329.63,392.00,466.16,587.33,659.25,784.00,932.33];
+  function scheduleSparkle(){
+    if(!bgmRunning)return;
+    const c2=ac(),freq=ryukyu[Math.floor(Math.random()*ryukyu.length)],now=c2.currentTime;
+    const osc=c2.createOscillator(),g=c2.createGain();
+    osc.type='sine';osc.frequency.value=freq;
+    g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(0.05,now+0.1);g.gain.exponentialRampToValueAtTime(0.001,now+3.0);
+    const osc2=c2.createOscillator(),g2=c2.createGain();
+    osc2.type='sine';osc2.frequency.value=freq*2;
+    g2.gain.setValueAtTime(0,now);g2.gain.linearRampToValueAtTime(0.018,now+0.08);g2.gain.exponentialRampToValueAtTime(0.001,now+1.8);
+    osc.connect(g);g.connect(bgmGain);osc2.connect(g2);g2.connect(bgmGain);
+    osc.start(now);osc.stop(now+3.1);osc2.start(now);osc2.stop(now+1.9);
+    setTimeout(scheduleSparkle,(2+Math.random()*5)*1000);
+  }
+  scheduleSparkle();
+}
+function toggleMute(){
+  muted=!muted;
+  if(bgmGain) bgmGain.gain.setTargetAtTime(muted?0:1.0,ac().currentTime,0.3);
+  document.getElementById('btn-mute').textContent=muted?'🔕':'🔔';
+}
+
+function soundSelect(n){const f=[659.25,784.00,932.33];marimba(f[n-1],0.16,0,0.7);crystal(f[n-1]*2,0.05,0.03);}
+function soundDeselect(){marimba(329.63,0.1,0,0.3);}
+function showHint(){
+  const sets = findSets(board);
+  if(!sets.length) return;
+  const hintSet = sets[0];
+  const cards = document.querySelectorAll('.card');
+
+  // 全カードのヒント表示リセット
+  cards.forEach(el=> el.classList.remove('hint-glow'));
+
+  // hintRevealed枚まで明滅（縁のみ・他パネルは触らない）
+  for(let h=0; h<hintRevealed; h++){
+    const idx = hintSet[h];
+    if(cards[idx]) cards[idx].classList.add('hint-glow');
+  }
+}
+
+// パーティクル演出は無効化中
+function spawnExorciseParticles(){}
+
+
+function clearHint(){
+  hintRevealed=0;
+  document.querySelectorAll('.card').forEach(el=>{
+    el.classList.remove('hint-glow');
+  });
+}
+
+function triggerDamageEffect(label='MISS'){
+  // 画面赤フラッシュ
+  const ov = document.getElementById('damage-overlay');
+  ov.classList.remove('flash');
+  void ov.offsetWidth;
+  ov.classList.add('flash');
+
+  // ダメージ数字をキャラの近くに表示
+  const num = document.getElementById('damage-number');
+  const charRect = document.getElementById('char-img').getBoundingClientRect();
+  num.textContent = label;
+  num.style.left = (charRect.left + charRect.width/2 - 40) + 'px';
+  num.style.top  = (charRect.top + charRect.height*0.3) + 'px';
+  num.classList.remove('pop');
+  void num.offsetWidth;
+  num.classList.add('pop');
+
+  // キャラ揺れ
+  const charEl = document.getElementById('char-img');
+  charEl.classList.remove('damage-shake');
+  void charEl.offsetWidth;
+  charEl.classList.add('damage-shake');
+  setTimeout(()=> charEl.classList.remove('damage-shake'), 600);
+
+  // 画面全体の短い揺れ（scroll trick）
+  const gameArea = document.getElementById('game-area');
+  gameArea.style.transition='transform 0.05s';
+  gameArea.style.transform='translateX(-5px)';
+  setTimeout(()=>{ gameArea.style.transform='translateX(4px)'; }, 60);
+  setTimeout(()=>{ gameArea.style.transform='translateX(-3px)'; }, 120);
+  setTimeout(()=>{ gameArea.style.transform='translateX(0)'; }, 180);
+}
+
+// ポーズ中セリフ
+const PAUSE_LINES = {
+  a: ['…待っている。','急ぐことはない。','ゆっくり考えてくれ。','準備ができたら続けよう。'],
+  b: ['待っとるで！','焦らんでええよ。','ゆっくりでええから。','いつでも再開してな。'],
+  c: ['お待ちしております。','どうぞゆっくりと。','焦らなくて大丈夫ですよ。','準備ができたらどうぞ。'],
+  d: ['…待つ。','急がなくていい。','ゆっくりでいい。','準備ができたら言え。'],
+  e: ['待ってるぞ。','焦ることはない。','じっくり考えてくれ。','いつでも再開していい。'],
+  f: ['待っているよ。','焦らなくていい。','ゆっくりどうぞ。','準備ができたら続けよう。'],
+  g: ['待ってるよ〜。','のんびりでいいよ。','焦らず行こ。','準備できたら声かけて。'],
+};
+
+let _paused = false;
+
+function showPause(){
+  if(_paused) return;
+  _paused = true;
+  clearInterval(cdInterval); // カウントダウン止める
+
+  const ps = document.getElementById('pause-screen');
+  ps.classList.add('show');
+  document.getElementById('pause-char-img').textContent = currentChar.emoji;
+  document.getElementById('pause-char-name').textContent = currentChar.name;
+
+  const lines = PAUSE_LINES[currentCharKey] || PAUSE_LINES.a;
+  const text = lines[Math.floor(Math.random()*lines.length)];
+  const el = document.getElementById('pause-msg-text');
+  el.textContent = '';
+  let i=0;
+  const iv = setInterval(()=>{
+    if(i>=text.length){ clearInterval(iv); return; }
+    el.textContent += text[i++];
+  }, 50);
+}
+
+function hidePause(){
+  if(!_paused) return;
+  _paused = false;
+  document.getElementById('pause-screen').classList.remove('show');
+  // 残り秒数からそのまま再開
+  resumeCountdown();
+}
+
+function resumeCountdown(){
+  clearInterval(cdInterval);
+  const bar = document.getElementById('cd-bar');
+  cdInterval = setInterval(()=>{
+    cdRemain--;
+    bar.style.width = (cdRemain/30*100)+'%';
+    document.getElementById('timer').textContent = cdRemain;
+    if(cdRemain<=10){
+      if(!muted){
+        soundChikutaku();
+        // 残り5秒以下：0.5秒後にもう一発
+        if(cdRemain<=5){
+          setTimeout(soundChikutaku, 500);
+        }
+        // 残り3秒以下：さらに細かく
+        if(cdRemain<=3){
+          setTimeout(soundChikutaku, 250);
+          setTimeout(soundChikutaku, 750);
+        }
+      }
+    }
+    if(cdRemain<=7){
+      bar.classList.add('danger');
+      document.getElementById('cd-pill').style.borderColor='rgba(255,80,80,0.4)';
+      document.getElementById('timer').style.color='#ff6b6b';
+    } else {
+      document.getElementById('cd-pill').style.borderColor='';
+      document.getElementById('timer').style.color='';
+    }
+    if(cdRemain<=0){
+      clearInterval(cdInterval);
+      onTimeout();
+    }
+  },1000);
+}
+
+function soundChikutaku(){
+  // 拍子木風の短いクリック
+  const c=ac(), now=c.currentTime;
+  const buf=c.createBuffer(1,c.sampleRate*0.025,c.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let k=0;k<data.length;k++)
+    data[k]=(Math.random()*2-1)*Math.exp(-k/(c.sampleRate*0.005));
+  const src=c.createBufferSource(); src.buffer=buf;
+  const bpf=c.createBiquadFilter(); bpf.type='bandpass';
+  bpf.frequency.value=3400; bpf.Q.value=5;
+  const g=c.createGain(); g.gain.value=0.3;
+  src.connect(bpf); bpf.connect(g); g.connect(c.destination);
+  src.start(now); src.stop(now+0.03);
+}
+
+function soundAffUp(){
+  // 澄んだ高音チャイム
+  crystal(1046.5, 0.12, 0);
+  crystal(1318.5, 0.08, 0.08);
+}
+function soundAffDown(){
+  // 低めのくぐもった音
+  marimba(146.83, 0.18, 0, 0.5);
+  marimba(130.81, 0.12, 0.1, 0.4);
+}
+function soundGameOver(){
+  [220, 196, 174.61, 164.81].forEach((f,i)=>{
+    marimba(f, 0.15, i*0.18, 0.6);
+  });
+}
+function soundEpilogue(){
+  crystal(783.99, 0.1, 0);
+  crystal(987.77, 0.07, 0.15);
+  crystal(1174.66, 0.05, 0.3);
+}
+function soundCorrect(){
+  const c=ac(), now=c.currentTime;
+  // ほわ〜っと上昇する浄化音
+  // 柔らかいサイン波が重なってフェードイン→ゆっくり消える
+  const freqs=[392,523.25,659.25,783.99];
+  freqs.forEach((f,i)=>{
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(f*0.98, now+i*0.06);
+    osc.frequency.linearRampToValueAtTime(f, now+i*0.06+0.3);
+    g.gain.setValueAtTime(0, now+i*0.06);
+    g.gain.linearRampToValueAtTime(0.12, now+i*0.06+0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, now+i*0.06+1.4);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(now+i*0.06); osc.stop(now+i*0.06+1.5);
+  });
+  // ふわっとした高音のきらめき
+  [1046.5,1318.5].forEach((f,i)=>{
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.type='sine'; osc.frequency.value=f;
+    const t=now+0.2+i*0.12;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.07,t+0.08);
+    g.gain.exponentialRampToValueAtTime(0.001,t+1.0);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t); osc.stop(t+1.1);
+  });
+}
+function soundWrong(){marimba(246.94,0.15,0,0.4);marimba(233.08,0.12,0.1,0.5);}
+function soundClear(){[[392,0],[493.88,0.15],[587.33,0.3],[783.99,0.5],[659.25,0.72],[783.99,0.88],[1046.5,1.08]].forEach(([f,d])=>{marimba(f,0.2,d,1.2);crystal(f,0.08,d+0.05);});}
+
+// ══ ゲームロジック ══════════════════════════════════════
+const COLORS=['aka','seiji','yamabuki'];
+const SHAPES=['hitodama','torii','goBousei'];
+const COUNTS=[1,2,3];
+const CM={aka:'#e8002a',seiji:'#2ab8d4',yamabuki:'#c8e832'};
+
+function makeDeck(){const d=[];for(const c of COLORS)for(const s of SHAPES)for(const n of COUNTS)d.push({color:c,shape:s,count:n});return shuffle(d);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function isSet(a,b,c){for(const k of['color','shape','count']){if(new Set([a[k],b[k],c[k]]).size===2)return false;}return true;}
+function findSets(cards){const s=[];for(let i=0;i<cards.length-2;i++)for(let j=i+1;j<cards.length-1;j++)for(let k=j+1;k<cards.length;k++)if(isSet(cards[i],cards[j],cards[k]))s.push([i,j,k]);return s;}
+
+function makeShape(card){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 80 90');svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  const col=CM[card.color];
+  const n=card.count;
+  const draw=(shape,col,cx,cy)=>{
+    if(shape==='hitodama') return drawHitodama(col,cy,cx);
+    else if(shape==='torii') return drawTorii(col,cy,cx);
+    else return drawGoBousei(col,cy,cx);
+  };
+
+  if(n===1){
+    // 1個：中央
+    svg.appendChild(draw(card.shape,col,40,45));
+  } else if(n===2){
+    // 2個：左右並び
+    svg.appendChild(draw(card.shape,col,22,45));
+    svg.appendChild(draw(card.shape,col,58,45));
+  } else {
+    // 3個：逆三角（上1・下2）
+    svg.appendChild(draw(card.shape,col,40,28));   // 上中央
+    svg.appendChild(draw(card.shape,col,20,65));   // 下左
+    svg.appendChild(draw(card.shape,col,60,65));   // 下右
+  }
+  return svg;
+}
+// 人魂：サンプル画像準拠（下膨れ体＋渦巻き＋スッと伸びる尾）
+function drawHitodama(col,cy,cx=40){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+
+  // グロー（最背面）
+  const glow=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  glow.setAttribute('cx',cx);glow.setAttribute('cy',cy+3);
+  glow.setAttribute('r','16');glow.setAttribute('fill',col);glow.setAttribute('opacity','0.12');
+  g.appendChild(glow);
+
+  // 尾：細く上方向にスッと伸びて先端が右にカーブ
+  // サンプルの特徴：根元太め→先細り→右に曲がる
+  const tail=document.createElementNS('http://www.w3.org/2000/svg','path');
+  tail.setAttribute('d',
+    `M ${cx-3} ${cy-11}
+     C ${cx-4} ${cy-18} ${cx-2} ${cy-24} ${cx+2} ${cy-28}
+     C ${cx+5} ${cy-31} ${cx+7} ${cy-30} ${cx+6} ${cy-27}
+     C ${cx+5} ${cy-24} ${cx+2} ${cy-22} ${cx+3} ${cy-17}
+     C ${cx+3} ${cy-14} ${cx+3} ${cy-11} ${cx+3} ${cy-11}`
+  );
+  tail.setAttribute('fill',col);
+  tail.setAttribute('opacity','0.8');
+  g.appendChild(tail);
+
+  // 本体：下膨れの涙型（円ベース）
+  const body=document.createElementNS('http://www.w3.org/2000/svg','path');
+  body.setAttribute('d',
+    `M ${cx} ${cy-11}
+     C ${cx+14} ${cy-11} ${cx+13} ${cy+14} ${cx} ${cy+14}
+     C ${cx-13} ${cy+14} ${cx-14} ${cy-11} ${cx} ${cy-11} Z`
+  );
+  body.setAttribute('fill',col);
+  g.appendChild(body);
+
+  // 渦巻き（サンプル画像の特徴的な部分）
+  // 大きめのC字カーブ
+  const swirl=document.createElementNS('http://www.w3.org/2000/svg','path');
+  swirl.setAttribute('d',
+    `M ${cx+5} ${cy+8}
+     C ${cx+5} ${cy+2} ${cx+1} ${cy-2} ${cx-3} ${cy}
+     C ${cx-7} ${cy+2} ${cx-6} ${cy+8} ${cx-2} ${cy+10}
+     C ${cx+2} ${cy+11} ${cx+5} ${cy+9} ${cx+5} ${cy+7}`
+  );
+  swirl.setAttribute('fill','none');
+  swirl.setAttribute('stroke','rgba(255,255,255,0.55)');
+  swirl.setAttribute('stroke-width','2');
+  swirl.setAttribute('stroke-linecap','round');
+  g.appendChild(swirl);
+
+  // ハイライト（左上の光）
+  const hl=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+  hl.setAttribute('cx',cx-5);hl.setAttribute('cy',cy-3);
+  hl.setAttribute('rx','4.5');hl.setAttribute('ry','3');
+  hl.setAttribute('fill','rgba(255,255,255,0.3)');
+  hl.setAttribute('transform',`rotate(-30,${cx-5},${cy-3})`);
+  g.appendChild(hl);
+
+  return g;
+}
+function drawTorii(col,cy,cx=40){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  // 笠木：中央が低く、両端が跳ね上がる（伊勢・明神系）
+  const kasagi=document.createElementNS('http://www.w3.org/2000/svg','path');
+  kasagi.setAttribute('d',
+    `M ${cx-18} ${cy-12}
+     L ${cx-12} ${cy-8}
+     L ${cx} ${cy-7}
+     L ${cx+12} ${cy-8}
+     L ${cx+18} ${cy-12}
+     L ${cx+18} ${cy-8}
+     L ${cx+12} ${cy-4}
+     L ${cx} ${cy-3}
+     L ${cx-12} ${cy-4}
+     L ${cx-18} ${cy-8} Z`
+  );
+  kasagi.setAttribute('fill',col);
+  g.appendChild(kasagi);
+  // 島木
+  const shimagi=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  shimagi.setAttribute('x',cx-13);shimagi.setAttribute('y',cy+2);
+  shimagi.setAttribute('width','26');shimagi.setAttribute('height','4');shimagi.setAttribute('rx','1');
+  shimagi.setAttribute('fill',col);g.appendChild(shimagi);
+  // 左柱
+  const l=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  l.setAttribute('x',cx-13);l.setAttribute('y',cy-10);
+  l.setAttribute('width','5');l.setAttribute('height','28');l.setAttribute('rx','1.5');
+  l.setAttribute('fill',col);g.appendChild(l);
+  // 右柱
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',cx+8);r.setAttribute('y',cy-10);
+  r.setAttribute('width','5');r.setAttribute('height','28');r.setAttribute('rx','1.5');
+  r.setAttribute('fill',col);g.appendChild(r);
+  return g;
+}
+// 五芒星：アウトラインのみ
+function drawGoBousei(col,cy,cx=40){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');const r=13;
+  // 五芒星の5点を計算
+  const pts=[];
+  for(let i=0;i<5;i++){
+    const a=(i*72-90)*Math.PI/180;
+    pts.push([cx+Math.cos(a)*r, cy+Math.sin(a)*r]);
+  }
+  // 星の線（0→2→4→1→3→0）
+  const star=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  const order=[0,2,4,1,3];
+  const pointsStr=order.map(i=>pts[i].join(',')).join(' ');
+  star.setAttribute('points',pointsStr);
+  star.setAttribute('fill','none');
+  star.setAttribute('stroke',col);
+  star.setAttribute('stroke-width','2.5');
+  star.setAttribute('stroke-linejoin','round');
+  g.appendChild(star);
+  // 中心の小さな丸
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);
+  dot.setAttribute('r','2.5');dot.setAttribute('fill',col);
+  g.appendChild(dot);
+  return g;
+}
+
+// ══ 好感度 ══════════════════════════════════════════════
+function updateAffBar(){
+  document.getElementById('aff-bar').style.width = affection+'%';
+  // ♡一つ固定、数値を更新
+  const h = document.getElementById('aff-hearts');
+  if(h) h.textContent = affection >= 50 ? '♥' : '♡';
+  const n = document.getElementById('aff-num');
+  if(n) n.textContent = affection;
+}
+function changeAffection(delta){
+  const prev = affection;
+  affection = Math.max(0, Math.min(100, affection + delta));
+  updateAffBar();
+
+  // 音
+  if(delta > 0) soundAffUp();
+  else soundAffDown();
+
+  // 数字ポップアップ
+  const deltaEl = document.getElementById('aff-delta');
+  deltaEl.className = 'aff-delta';
+  void deltaEl.offsetWidth;
+  deltaEl.textContent = delta > 0 ? '+'+delta : delta;
+  deltaEl.classList.add(delta > 0 ? 'pop-up' : 'pop-down');
+
+  // バーフラッシュ
+  const bar = document.getElementById('aff-bar');
+  bar.classList.remove('flash','flash-down');
+  void bar.offsetWidth;
+  bar.classList.add(delta > 0 ? 'flash' : 'flash-down');
+
+  // ハートパルス
+  const hearts = document.getElementById('aff-hearts');
+  hearts.classList.remove('pulse');
+  void hearts.offsetWidth;
+  hearts.classList.add('pulse');
+  setTimeout(()=>{ hearts.classList.remove('pulse'); }, 400);
+
+  // 好感度0はloseLife側で管理するのでここでは何もしない
+  if(currentCharKey) saveAffection(currentCharKey);
+
+  // 閾値を超えたら即クリア
+  if(delta > 0 && prev < affection){
+    const prevChapter = getChapterIdx(prev);
+    const newChapter  = getChapterIdx(affection);
+    if(newChapter > prevChapter){
+      // saveAffectionが完了してからgameOverを呼ぶ
+      if(currentCharKey) saveAffection(currentCharKey);
+      setTimeout(()=>{
+        clearInterval(ti); clearInterval(cdInterval);
+        gameOver();
+      }, 400);
+    }
+  }
+}
+
+function getChapterIdx(aff){
+  for(let i=CHAPTER_THRESHOLDS.length-1; i>=0; i--){
+    if(aff >= CHAPTER_THRESHOLDS[i]) return i;
+  }
+  return 0;
+}
+function heartsFromAff(){
+  if(affection>=80) return '♥♥♥♥♥';
+  if(affection>=60) return '♥♥♥♥♡';
+  if(affection>=40) return '♥♥♥♡♡';
+  if(affection>=20) return '♥♥♡♡♡';
+  return '♥♡♡♡♡';
+}
+
+// ══ カウントダウン ══════════════════════════════════════
+function startCountdown(){
+  clearInterval(cdInterval);
+  cdRemain=30;
+  document.getElementById('timer').textContent='30';
+  document.getElementById('timer').style.color='';
+  const bar=document.getElementById('cd-bar');
+  bar.classList.remove('danger');
+  bar.style.transition='width .5s linear';
+  bar.style.width='100%';
+  cdInterval=setInterval(()=>{
+    cdRemain--;
+    bar.style.width=(cdRemain/30*100)+'%';
+    document.getElementById('timer').textContent=cdRemain;
+    if(cdRemain<=10){
+      if(!muted){
+        soundChikutaku();
+        // 残り5秒以下：0.5秒後にもう一発
+        if(cdRemain<=5){
+          setTimeout(soundChikutaku, 500);
+        }
+        // 残り3秒以下：さらに細かく
+        if(cdRemain<=3){
+          setTimeout(soundChikutaku, 250);
+          setTimeout(soundChikutaku, 750);
+        }
+      }
+    }
+    if(cdRemain<=7){
+      bar.classList.add('danger');
+      document.getElementById('cd-pill').style.borderColor='rgba(255,80,80,0.4)';
+      document.getElementById('timer').style.color='#ff6b6b';
+    } else {
+      document.getElementById('cd-pill').style.borderColor='';
+      document.getElementById('timer').style.color='';
+    }
+    if(cdRemain<=0){
+      clearInterval(cdInterval);
+      onTimeout();
+    }
+  },1000);
+}
+function onTimeout(){
+  loseLife();
+  if(lives <= 0) return;
+  triggerDamageEffect('TIME!!');
+  charReact('bad');
+  speakAI('timeout',null);
+  ensure();
+
+  // ヒント段階を1つ増やす（最大3枚）
+  if(hintRevealed < 3){
+    hintRevealed++;
+    showHint();
+  }
+  startCountdown();
+}
+
+// ══ ゲーム状態 ══════════════════════════════════════════
+let deck=[],board=[],sel=[],score=0,t0,ti;
+
+function startGame(){
+  _submitting = false; // 必ずリセット
+  loadLives();
+  updateLivesUI();
+  deck=makeDeck();board=[];sel=[];score=0;
+  document.getElementById('score').textContent='0';
+  document.getElementById('overlay').classList.remove('show');
+  hintRevealed=0;
+  dots();
+  for(let i=0;i<9;i++)board.push(deck.pop());
+  ensure();render();
+  t0=Date.now();
+  startCountdown();
+}
+function pad(n){return String(n).padStart(2,'0');}
+
+function ensure(){
+  if(findSets(board).length>0)return;
+  // デッキも空でセットなし→本当にゲームオーバー
+  if(deck.length===0){
+    gameOver();
+    return;
+  }
+  const notice=document.getElementById('reshuffle-notice');
+  notice.classList.add('show');
+  setTimeout(()=>{
+    // 場とデッキを合わせてシャッフル
+    const all=shuffle(deck.concat(board));
+    deck=all; board=[];
+    // 最大9枚まで補充（デッキが少なければその分だけ）
+    const count=Math.min(9, deck.length);
+    for(let i=0;i<count;i++) board.push(deck.pop());
+    // undefinedを除去
+    board=board.filter(c=>c!==undefined&&c!==null);
+    if(board.length===0||(findSets(board).length===0&&deck.length===0)){
+      notice.classList.remove('show');
+      gameOver();
+      return;
+    }
+    if(findSets(board).length===0){ ensure(); return; }
+    notice.classList.remove('show');
+    render();
+  },700);
+}
+
+function render(){
+  const bd=document.getElementById('board');bd.innerHTML='';
+  board.forEach((card,i)=>{
+    const div=document.createElement('div');div.className='card';
+    const svg=makeShape(card);
+    // 呼吸アニメのパラメータ（周期・位相・スケールをカードごとにランダム）
+    const dur = (3.5 + Math.random() * 2.0).toFixed(1) + 's';
+    const delay = (-Math.random() * 4).toFixed(1) + 's';
+    const scale = (1.05 + Math.random() * 0.04).toFixed(2);
+    svg.style.setProperty('--float-dur', dur);
+    svg.style.setProperty('--float-delay', delay);
+    svg.style.setProperty('--float-scale', scale);
+    div.appendChild(svg);
+    div.addEventListener('click',()=>pick(i));
+    bd.appendChild(div);
+  });
+  // 描画後にセットなしなら即切り直し
+  if(findSets(board).length===0) ensure();
+}
+
+let _submitting = false;
+
+function pick(i){
+  if(_submitting) return; // 判定処理中はタップ無効
+  if(sel.includes(i)){sel=sel.filter(x=>x!==i);soundDeselect();}
+  else if(sel.length<3){sel.push(i);soundSelect(sel.length);}
+  document.querySelectorAll('.card').forEach((el,j)=>{
+    el.classList.toggle('selected', sel.includes(j));
+    if(sel.includes(j)) el.classList.remove('hint-glow');
+  });
+  dots();
+  if(sel.length===3) submit();
+}
+function dots(){for(let i=0;i<3;i++)document.getElementById('d'+i).classList.toggle('on',i<sel.length);}
+
+function charReact(type){
+  const el=document.getElementById('char-img');
+  el.classList.remove('react-good','react-bad');
+  void el.offsetWidth;
+  el.classList.add(type==='good'?'react-good':'react-bad');
+}
+
+function submit(){
+  if(sel.length!==3)return;
+  if(_submitting)return;
+  _submitting = true;
+  if(sel.some(i=>i>=board.length)){_submitting=false;return;}
+  const [a,b,c]=sel.map(i=>board[i]);
+  const cards=document.querySelectorAll('.card');
+  if(!a||!b||!c){_submitting=false;return;}
+  if(isSet(a,b,c)){
+    sel.forEach(i=>cards[i].classList.add('correct'));
+    score++;document.getElementById('score').textContent=score;
+    changeAffection(+10); // DEBUG: 本番は+2
+    charReact('good');
+    setTimeout(soundCorrect, 80);
+    speakAI('correct',null);
+    clearHint();
+    startCountdown();
+    setTimeout(()=>{
+      [...sel].sort((a,b)=>b-a).forEach(i=>board.splice(i,1));
+      while(board.length<9&&deck.length>0)board.push(deck.pop());
+      sel=[];
+      if(board.length===0||(findSets(board).length===0&&deck.length===0)){gameOver();return;}
+      ensure();render();dots();
+      _submitting = false;
+    },350);
+  }else{
+    sel.forEach(i=>cards[i].classList.add('wrong'));
+    loseLife();
+    triggerDamageEffect('MISS!!');
+    charReact('bad');
+    soundWrong();
+    speakAI('wrong',null);
+    setTimeout(()=>{
+      document.querySelectorAll('.card').forEach(el=>el.classList.remove('wrong','selected'));
+      sel=[];dots();
+      _submitting = false;
+      startCountdown(); // 誤答後はカウントダウンをリセット
+    },800);
+  }
+}
+
+function gameOver(){
+  clearInterval(ti);clearInterval(cdInterval);
+  const s=Math.floor((Date.now()-t0)/1000);
+  soundClear();
+
+  const charKey = currentCharKey||'a';
+  const unlocked = unlockedChapterIdx();
+  const viewed = loadViewedChapters(charKey);
+  const chaptersToPlay = getChaptersToPlay(charKey);
+
+  if(chaptersToPlay.length > 0){
+    setTimeout(()=>playChaptersSequence(chaptersToPlay, charKey, score, s), 800);
+  } else {
+    showClearScreen(score);
+  }
+}
+
+async function playChaptersSequence(chapters, charKey, score, seconds){
+  const viewed = loadViewedChapters(charKey);
+  for(let ci=0; ci<chapters.length; ci++){
+    const chIdx = chapters[ci];
+    viewed.push(chIdx);
+    saveViewedChapters(charKey, viewed);
+    await playOneChapter(chIdx, score, seconds, ci===chapters.length-1);
+  }
+  showClearScreen(score);
+}
+
+async function playOneChapter(chIdx, score, seconds, isLast){
+  const epEl = document.getElementById('epilogue');
+  epEl.classList.add('show');
+  const epCharEl = document.getElementById('ep-char-img');
+  if(currentChar.illustration){
+    epCharEl.innerHTML = '<img src="' + currentChar.illustration + '" style="height:200px;width:auto;object-fit:contain;filter:drop-shadow(0 0 30px rgba(123,159,255,0.3))">';
+  } else {
+    epCharEl.textContent = currentChar.emoji;
+  }
+  document.getElementById('ep-msg-name').textContent = `${currentChar.name}　―${CHAPTER_NAMES[chIdx]}―`;
+  soundEpilogue();
+  document.getElementById('ep-msg-text').innerHTML = '<span class="msg-loading">…</span>';
+
+  const charKey = currentCharKey||'a';
+  const fallbackLines = {
+    a: [
+      null, // インデックス0未使用
+      // 第一章：霊がうるさい・最悪・眠れない
+      ['…また一つ消えた。早くしてくれ。こいつらがいると頭がうるさくて仕方ない。','見えるだけじゃない。気配もする。音もする。昨日も一晩中うるさくて、一睡もできなかった。','こいつらが何を言いたいのか知らないが、俺には関係ない。ただ消えてくれればそれでいい。','早く全部祓ってくれ。それだけ頼む。','…続けよう。'],
+      // 第二章：一匹だけ異様に近い・最悪に嫌い
+      ['また来てくれたか。…一匹、どうしても近いやつがいる。右肩の少し上。ずっとそこにいる。','気持ち悪い。正直に言う。こいつが一番嫌いだ。他の霊より何倍も近くて、何倍も気配がする。','今日も耳元で何かしている。息みたいなものが感じられる。吐き気がする。','最悪だ。こいつだけは早く消してくれ。他の誰より先に。','頼む。'],
+      // 第三章：助けてくれた・戸惑い・なぜ助けた
+      ['…来たか。昨日、変なことがあった。','階段を踏み外しそうになったとき、あの嫌いなやつが…止めた。俺の腕を引いた気がした。','転ばずに済んだ。それだけだ。偶然かもしれない。あいつがそんなことをするはずがない。','…でも、なぜ助けた。気持ち悪くて最悪なのに、それだけは分からなかった。','続けよう。余計なことを考えた。'],
+      // 第四章：手を握り返した・景色が見えた
+      ['また来てくれたか。今日…あいつが手を差し出してきた。','白くて、少し透けた手だった。気持ち悪かった。でも、俺は手を伸ばしていた。','握り返した瞬間、見えたんだ。空の青さ。川沿いの桜。雲の白さ。生まれてから一度も知らなかった色が、全部流れ込んできた。','俺は怖くて手を離した。でも…見えたんだ。本当に、見えた。','お前に言うつもりはなかった。ただ…あいつのことが、少しだけ分からなくなった。'],
+      // 第五章：迷い・祓っていいのか
+      ['…お前か。あいつは今日も近くにいる。以前ほど、気持ち悪くない。それが一番気持ち悪い。','あの景色が忘れられない。桜がピンクで、空が青かった。俺には一生分からないはずのことだった。','祓ったら、また何も見えなくなる。暗闇に戻る。それを望んでいたはずなのに。','本当に祓っていいのか。俺には、もう分からない。','…続けよう。今は、それだけだ。'],
+      // 第六章：待て・祓わないでくれ
+      ['待て。今すぐ祓うのをやめてくれ。','あいつが怖がっている。俺には分かる。消えたくないと、ずっと言っている。','最悪に嫌いだった。気持ち悪かった。でも、あいつは俺を助けた。景色を見せてくれた。','お前の仕事を邪魔したいわけじゃない。ただ…もう少しだけ、待ってくれ。','頼む。'],
+      // 結章（Ed）
+      ['…終わらせなくて、良かった。','こいつが俺の目だ。空の色も、桜の花びらも、全部こいつが見せてくれる。それでいい。','最悪に嫌いだったやつが、今は…まあ、悪くない。そう思っている。','お前がいなければ、俺はあいつを祓わせていた。そして一生、色を知らなかった。ありがとう。','…ありがとう。それだけだ。'],
+    ]
+  };
+  const fb = (fallbackLines[charKey]||fallbackLines.a);
+  const fbLine = fb[chIdx] || fb[Math.min(chIdx, fb.length-1)] || fb[fb.length-1];
+
+  let lines = null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:350,
+        system:`あなたは乙女ゲームのキャラクター「${currentChar.name}」です。性格：${currentChar.personality}。世界観：主人公はお祓い師、あなたは怪異に憑かれた依頼人。怪異の種類：${currentChar.haunting}。必ずJSON配列で5つのセリフのみ返してください。例：["セリフ1","セリフ2","セリフ3","セリフ4","セリフ5"]`,
+        messages:[{role:'user',content:`${CHAPTER_NAMES[chIdx]}のシーン。テーマ：${getChapterTheme(charKey,chIdx)}。好感度${affection}%。${score}組祓った。5行のセリフを。`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if(Array.isArray(parsed) && parsed.length > 0) lines = parsed;
+  } catch(e){}
+
+  epLines = lines || fbLine;
+  epIndex = 0;
+  showEpLine();
+
+  return new Promise(resolve=>{
+    const handler = ()=>{
+      epIndex++;
+      if(epIndex >= epLines.length){
+        epEl.removeEventListener('click', handler);
+        epEl.classList.remove('show');
+        resolve();
+      } else {
+        showEpLine();
+      }
+    };
+    epEl.addEventListener('click', handler);
+  });
+}
+
+function showClearScreen(score){
+  // 好感度を保存してからキャラ選択の表示に反映
+  if(currentCharKey) saveAffection(currentCharKey);
+  document.getElementById('fscore').innerHTML=`${score}<span> 組</span>`;
+  document.getElementById('ov-hearts').textContent=affection>=50?'♥':'♡';
+  const ovNum=document.getElementById('ov-aff-num');
+  if(ovNum) ovNum.textContent=affection;
+  document.getElementById('overlay').classList.add('show');
+  speakAI('clear',score).then(()=>{
+    const msg=document.getElementById('msg-text').textContent;
+    document.getElementById('ov-msg').textContent=msg;
+  });
+}
+
+function triggerGameOver(){
+  clearInterval(ti);clearInterval(cdInterval);
+  soundGameOver();
+  sel=[];
+  // 縁切れ時は好感度を大きく減らして保存
+  affection = Math.max(0, affection - 30);
+  document.getElementById('gameover').classList.add('show');
+  document.getElementById('go-char').textContent = currentChar.emoji;
+  document.getElementById('go-lives').textContent = lives <= 0 ? nextLifeIn() : '';
+  speakAI('gameover', null).then(()=>{
+    const msg = document.getElementById('msg-text').textContent;
+    document.getElementById('go-msg').textContent = msg;
+  });
+}
+
+// エピローグ
+let epLines = [];
+let epIndex = 0;
+
+async function startEpilogue(score, seconds){
+  const epEl = document.getElementById('epilogue');
+  epEl.classList.add('show');
+  const epCharEl = document.getElementById('ep-char-img');
+  if(currentChar.illustration){
+    epCharEl.innerHTML = '<img src="' + currentChar.illustration + '" style="height:200px;width:auto;object-fit:contain;filter:drop-shadow(0 0 30px rgba(123,159,255,0.3))">';
+  } else {
+    epCharEl.textContent = currentChar.emoji;
+  }
+  document.getElementById('ep-msg-name').textContent = currentChar.name;
+  soundEpilogue();
+
+  // AIに5行のエピローグを生成させる
+  const epTextEl = document.getElementById('ep-msg-text');
+  epTextEl.innerHTML = '<span class="msg-loading">…</span>';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: `あなたは乙女ゲームの攻略対象キャラクター「${currentChar.name}」です。性格：${currentChar.personality}。世界観：主人公はお祓い師で、あなたは怪異に悩む依頼人。今回の怪異祓いが成功した後の感謝と絆のエピローグ。必ずJSON配列で5つのセリフのみを返してください。例：["セリフ1","セリフ2","セリフ3","セリフ4","セリフ5"]`,
+        messages: [{ role:'user', content:`${score}組の怪異を祓った。好感度は高い。クリアタイム${Math.floor(seconds/60)}分${seconds%60}秒。感謝と絆を表す5行のエピローグを。` }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '["…","…","…","…","…"]';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    epLines = JSON.parse(clean);
+  } catch(e) {
+    epLines = [
+      '…ありがとう。本当に助かった。',
+      'あなたがいなければ、どうなっていたか。',
+      '怪異というものは、こんなにも恐ろしいものなのか。',
+      'また何かあったとき…頼んでもいいだろうか。',
+      'ありがとうございました。'
+    ];
+    if(currentChar === CHARS.b){
+      epLines = [
+        'ほんまにありがとう、助かったわ！',
+        'あんな怪異、見えるとか…すごすぎやろ。',
+        'もう怖い思いせんで済むんやな。',
+        'また何かあったら、真っ先にあんたに連絡するわ。',
+        'ほんまに、ありがとうございました！'
+      ];
+    }
+  }
+
+  epIndex = 0;
+  showEpLine();
+  epEl.addEventListener('click', onEpTap);
+}
+
+function showEpLine(){
+  const text = epLines[epIndex] || '';
+  const el = document.getElementById('ep-msg-text');
+  el.textContent = '';
+  let i = 0;
+  const iv = setInterval(()=>{
+    el.textContent += text[i++];
+    if(i >= text.length){ clearInterval(iv); speakText(text); }
+  }, 40);
+  for(let d=0;d<5;d++){
+    document.getElementById('ep-dot-'+d).classList.toggle('on', d===epIndex);
+  }
+  soundEpilogue();
+}
+
+function onEpTap(){
+  epIndex++;
+  if(epIndex >= epLines.length){
+    // エピローグ終了→通常クリア画面へ
+    document.getElementById('epilogue').removeEventListener('click', onEpTap);
+    document.getElementById('epilogue').classList.remove('show');
+    document.getElementById('fscore').innerHTML=`${epLines.length}<span> 組</span>`;
+    document.getElementById('ov-hearts').textContent=heartsFromAff();
+    document.getElementById('ov-msg').textContent='また会う日を楽しみにしています。';
+    document.getElementById('overlay').classList.add('show');
+  } else {
+    showEpLine();
+  }
+}
+
+// ══ タイトルプレビュー ══════════════════════════════════
+function buildCharCards(){
+  const wrap = document.getElementById('char-cards-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'char-cards';
+  CHAR_KEYS.forEach(key => {
+    const ch = CHARS[key];
+    const aff = loadAffection(key);
+    const hearts = affToHearts(aff);
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.style.cssText = `border-color: ${ch.accent}33; box-shadow: none;`;
+    card.innerHTML = `
+      <div class="char-portrait-placeholder" style="font-size:48px">${ch.emoji}</div>
+      <div class="char-info">
+        <div class="char-name" style="color:${ch.accent}">${ch.name}</div>
+        <div class="char-name-sub">${ch.domain}</div>
+        <div class="char-aff" style="color:${ch.accent}">好感度 ${aff}<span style="font-size:10px;opacity:0.7"> / 100</span></div>
+      </div>`;
+    card.addEventListener('click', ()=>selectChar(key));
+    div.appendChild(card);
+  });
+  wrap.appendChild(div);
+}
+
+function affToHearts(aff){
+  const filled = Math.round(aff/20);
+  return '♥'.repeat(filled) + '♡'.repeat(5-filled);
+}
+
+function refreshCharCards(){
+  buildCharCards();
+}
+
+function buildPreview(){
+  const wrap=document.getElementById('preview-icons');
+  if(!wrap)return;
+  [{shape:'hitodama',color:'aka'},{shape:'torii',color:'seiji'},{shape:'goBousei',color:'yamabuki'}].forEach(({shape,color})=>{
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 80 90');svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+    svg.style.cssText='width:44px;height:44px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+    const col=CM[color];
+    if(shape==='hitodama') svg.appendChild(drawHitodama(col,45));
+    else if(shape==='torii') svg.appendChild(drawTorii(col,45));
+    else svg.appendChild(drawGoBousei(col,45));
+    wrap.appendChild(svg);
+  });
+}
+window.addEventListener('DOMContentLoaded',()=>{ buildPreview(); buildCharCards(); });
+
+document.getElementById('btn-mute').addEventListener('click',toggleMute);
+document.getElementById('btn-pause').addEventListener('click',showPause);
+document.getElementById('btn-voice').addEventListener('click',toggleVoice);
+document.getElementById('btn-resume').addEventListener('click',hidePause);
+document.getElementById('btn-retry').addEventListener('click',()=>{
+  document.getElementById('gameover').classList.remove('show');
+  document.getElementById('game-ui').classList.remove('show');
+  refreshCharCards();
+  document.getElementById('char-select').style.display='flex';
+});
+
+document.getElementById('btn-restart').addEventListener('click',()=>{
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('game-ui').classList.remove('show');
+  refreshCharCards();
+  document.getElementById('char-select').style.display='flex';
+});
+
+</script>
+</body>
+</html>
