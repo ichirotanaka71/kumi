@@ -136,15 +136,15 @@ body {
 /* ══════════════════════════════════════
    ゲーム画面
 ══════════════════════════════════════ */
-#game-ui { display:none; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+#game-ui { display:none; flex:1; flex-direction:column; min-height:0; overflow:hidden; position:relative; }
 #game-ui.show { display:flex; }
 
-/* ── 上半分：キャラエリア ── */
+/* ── キャラエリア：game-ui全画面背景 ── */
 #char-area {
-  flex: 1 1 0;
-  position: relative; overflow: hidden;
+  position: absolute; inset: 0;
+  overflow: hidden;
   background: transparent;
-  min-height: 0;
+  z-index: 0;
 }
 
 /* キャラ画像 */
@@ -198,10 +198,10 @@ body {
 
 /* ヘッダー情報（キャラエリア上に重ねる） */
 #hud {
-  position: relative;
+  position: fixed; top: env(safe-area-inset-top); left: 0; right: 0;
   padding: 8px 14px;
   display: flex; align-items: center; justify-content: space-between;
-  z-index: 50;
+  z-index: 100;
   background: rgba(0,0,0,0.85);
   flex-shrink: 0;
 }
@@ -243,8 +243,10 @@ body {
 
 /* 好感度バー */
 #affection-bar-wrap {
-  position: absolute; bottom: 56px; left: 16px; right: 16px;
-  z-index: 10;
+  position: fixed; bottom: calc(50% + 52px); left: 0; right: 0;
+  padding: 0 16px;
+  z-index: 100;
+  pointer-events: none;
 }
 .aff-top-row {
   display: flex; align-items: center; gap: 6px;
@@ -349,12 +351,13 @@ body {
 
 /* セリフウィンドウ */
 #msg-window {
-  position: absolute; bottom: 0; left: 0; right: 0;
+  position: fixed; bottom: 50%; left: 0; right: 0;
+  transform: translateY(52px);
   background: var(--msg-bg);
   border-top: 1px solid var(--msg-border);
   padding: 6px 16px 8px;
   height: 52px;
-  z-index: 30;
+  z-index: 100;
   backdrop-filter: blur(8px);
   transition: opacity .4s;
   overflow: hidden;
@@ -384,9 +387,10 @@ body {
 /* ── 下半分：ゲームエリア ── */
 #game-area {
   flex: 1 1 0; min-height: 0;
-  background: rgba(5,3,14,0.55);
+  background: transparent;
   display: flex; flex-direction: column;
   position: relative;
+  z-index: 1;
 }
 /* 和紙テクスチャ無効 */
 #game-area::before {
@@ -960,7 +964,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:39</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:44</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1033,7 +1037,7 @@ body {
       <button id="btn-pause">⏸</button>
     </div>
 
-    <div id="char-overlay" style="position:absolute;top:48px;left:14px;z-index:20;">
+    <div id="char-overlay" style="position:fixed;top:calc(env(safe-area-inset-top) + 48px);left:14px;z-index:100;">
       <div id="char-overlay-name" style="font-family:'Shippori Mincho',serif;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.7);margin-bottom:4px;pointer-events:none;"></div>
       <div style="display:flex;align-items:center;gap:5px;cursor:pointer;" onclick="changeAffection(+2)">
         <span style="font-size:13px;color:var(--affection-color);">♡</span>
@@ -1045,7 +1049,7 @@ body {
     </div>
 
     <!-- 中央タイマー -->
-    <div id="center-timer-wrap" style="position:absolute;bottom:56px;left:16px;right:16px;z-index:10;">
+    <div id="center-timer-wrap" style="position:fixed;bottom:50%;left:0;right:0;padding:0 16px;z-index:100;transform:translateY(100%);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div style="font-family:'Shippori Mincho',serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);">残り時間</div>
         <div id="center-timer-num" style="font-family:'Shippori Mincho',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);">30</div>
