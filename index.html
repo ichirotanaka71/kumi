@@ -965,7 +965,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:50</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:55</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1187,7 +1187,7 @@ function stopVoice(){
 // faceRatio: コンテナ内で顔を置く位置（0〜1、デフォルト0.35）
 function setCharImage(el, char, faceRatio){
   if(!el) return;
-  const ratio = faceRatio !== undefined ? faceRatio : 0.35;
+  const ratio = faceRatio !== undefined ? faceRatio : 0.18;
   if(char.illustration){
     el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
     // 2段階rAFでレイアウト確定後に計算
