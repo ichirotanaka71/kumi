@@ -201,8 +201,8 @@ pointer-events: none;
 position: relative;
 padding: 8px 14px;
 display: flex; align-items: center; justify-content: space-between;
-z-index: 100;
-background: rgba(0,0,0,0.8);
+z-index: 50;
+background: rgba(0,0,0,0.85);
 flex-shrink: 0;
 }
 .hud-pill {
@@ -243,9 +243,8 @@ backdrop-filter: blur(4px);
 
 /* 好感度バー */
 #affection-bar-wrap {
-position: fixed; bottom: 56px; left: 0; right: 0; padding: 0 16px;
-z-index: 60;
-pointer-events: none;
+position: absolute; bottom: 56px; left: 16px; right: 16px;
+z-index: 10;
 }
 .aff-top-row {
 display: flex; align-items: center; gap: 6px;
@@ -350,12 +349,12 @@ transition: width .5s linear;
 
 /* セリフウィンドウ */
 #msg-window {
-position: fixed; bottom: 55%; left: 0; right: 0;
+position: absolute; bottom: 0; left: 0; right: 0;
 background: var(–msg-bg);
 border-top: 1px solid var(–msg-border);
 padding: 6px 16px 8px;
 height: 52px;
-z-index: 60;
+z-index: 30;
 backdrop-filter: blur(8px);
 transition: opacity .4s;
 overflow: hidden;
@@ -384,10 +383,10 @@ vertical-align: middle;
 
 /* ── 下半分：ゲームエリア ── */
 #game-area {
-position: absolute; bottom: 0; left: 0; right: 0;
-height: 55%;
-background: rgba(5,3,14,0.6);
+flex: 1 1 0; min-height: 0;
+background: rgba(5,3,14,0.55);
 display: flex; flex-direction: column;
+position: relative;
 z-index: 1;
 }
 /* 和紙テクスチャ無効 */
@@ -965,7 +964,7 @@ transition: background .3s;
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:17</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:31</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1055,7 +1054,7 @@ transition: background .3s;
 </div>
 
 <!-- 中央タイマー -->
-<div id="center-timer-wrap" style="position:fixed;bottom:calc(55% + 52px);left:0;right:0;padding:0 16px;z-index:60;pointer-events:none;">
+<div id="center-timer-wrap" style="position:absolute;bottom:56px;left:16px;right:16px;z-index:10;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
     <div style="font-family:'Shippori Mincho',serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);">残り時間</div>
     <div id="center-timer-num" style="font-family:'Shippori Mincho',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);">30</div>
@@ -1201,7 +1200,7 @@ function stopVoice(){
 // faceRatio: コンテナ内で顔を置く位置（0〜1、デフォルト0.35）
 function setCharImage(el, char, faceRatio){
   if(!el) return;
-  const ratio = faceRatio !== undefined ? faceRatio : 0.18;
+  const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
     el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
     // 2段階rAFでレイアウト確定後に計算
