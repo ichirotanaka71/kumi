@@ -965,7 +965,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 16:00</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 16:08</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1187,28 +1187,18 @@ function stopVoice(){
 // faceRatio: コンテナ内で顔を置く位置（0〜1、デフォルト0.35）
 function setCharImage(el, char, faceRatio){
   if(!el) return;
-  const ratio = faceRatio !== undefined ? faceRatio : 0.08;
+  const ratio = faceRatio !== undefined ? faceRatio : 0.20;
   if(char.illustration){
-    el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
-    // 2段階rAFでレイアウト確定後に計算
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        const img = el.querySelector('img');
-        if(!img) return;
-        const areaH = el.offsetHeight;
-        const imgH = img.offsetHeight;
-        if(!areaH || !imgH) return;
-        const faceY = char.faceY || 0.12;
-        // HUD高さ(約44px)を除いた有効エリアで顔位置を計算
-        const hudH = 44;
-        const targetY = hudH + (areaH - hudH) * ratio;
-        const faceAbsY = imgH * faceY;
-        img.style.marginTop = (targetY - faceAbsY) + 'px';
-        // 顔中心に120%拡大
-        img.style.transformOrigin = `50% ${faceY * 100}%`;
-        img.style.transform = 'scale(1.2)';
-      });
-    });
+    const faceY = char.faceY || 0.12;
+    const topVh = ratio * 100;
+    const shiftPct = faceY * 100;
+    el.style.position = 'relative';
+    el.style.overflow = 'visible';
+    const img = document.createElement('img');
+    img.src = char.illustration;
+    img.style.cssText = 'position:absolute;left:50%;top:' + topVh + 'vh;transform:translateX(-50%) translateY(-' + shiftPct + '%) scale(1.2);transform-origin:50% ' + shiftPct + '%;width:110%;height:auto;mix-blend-mode:lighten;display:block;';
+    el.innerHTML = '';
+    el.appendChild(img);
   } else {
     el.innerHTML = '';
     el.textContent = char.emoji;
