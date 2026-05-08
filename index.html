@@ -350,7 +350,7 @@ transition: width .5s linear;
 
 /* セリフウィンドウ */
 #msg-window {
-position: fixed; bottom: 0; left: 0; right: 0;
+position: fixed; bottom: 55%; left: 0; right: 0;
 background: var(–msg-bg);
 border-top: 1px solid var(–msg-border);
 padding: 6px 16px 8px;
@@ -965,7 +965,7 @@ transition: background .3s;
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:08</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 15:17</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1055,7 +1055,7 @@ transition: background .3s;
 </div>
 
 <!-- 中央タイマー -->
-<div id="center-timer-wrap" style="position:absolute;bottom:56px;left:16px;right:16px;z-index:10;">
+<div id="center-timer-wrap" style="position:fixed;bottom:calc(55% + 52px);left:0;right:0;padding:0 16px;z-index:60;pointer-events:none;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
     <div style="font-family:'Shippori Mincho',serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);">残り時間</div>
     <div id="center-timer-num" style="font-family:'Shippori Mincho',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);">30</div>
@@ -1201,7 +1201,7 @@ function stopVoice(){
 // faceRatio: コンテナ内で顔を置く位置（0〜1、デフォルト0.35）
 function setCharImage(el, char, faceRatio){
   if(!el) return;
-  const ratio = faceRatio !== undefined ? faceRatio : 0.35;
+  const ratio = faceRatio !== undefined ? faceRatio : 0.18;
   if(char.illustration){
     el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
     // 2段階rAFでレイアウト確定後に計算
