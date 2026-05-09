@@ -147,11 +147,13 @@ body {
   z-index: 0;
 }
 
-/* キャラ画像 */
+/* キャラ画像：char-areaを超えて画面いっぱいに */
 #char-img {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
+  width: 100%;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: calc(100dvh - 44px);
+  display: block;
   transition: filter .4s;
   overflow: visible;
 }
@@ -1031,7 +1033,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:49</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:54</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
