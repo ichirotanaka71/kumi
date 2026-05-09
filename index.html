@@ -1030,7 +1030,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:20</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:33</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1259,9 +1259,19 @@ function setCharImage(el, char, faceRatio){
   if(!el) return;
   const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
-    el.innerHTML = '<img src="' + char.illustration + '" style="height:100%;width:auto;max-width:none;mix-blend-mode:lighten;display:block;position:absolute;left:50%;transform:translateX(-50%);visibility:hidden;">';
+    el.innerHTML = '<img src="' + char.illustration + '" alt="">';
     const img = el.querySelector('img');
     if(!img) return;
+    // CSSセレクタに勝つように setProperty で important 指定
+    img.style.setProperty('height', '100%', 'important');
+    img.style.setProperty('width', 'auto', 'important');
+    img.style.setProperty('max-width', 'none', 'important');
+    img.style.setProperty('mix-blend-mode', 'lighten', 'important');
+    img.style.setProperty('display', 'block', 'important');
+    img.style.setProperty('position', 'absolute', 'important');
+    img.style.setProperty('left', '50%', 'important');
+    img.style.setProperty('transform', 'translateX(-50%)', 'important');
+    img.style.setProperty('visibility', 'hidden', 'important');
     const reposition = () => {
       const areaH = el.offsetHeight;
       const imgH = img.offsetHeight;
@@ -1269,8 +1279,8 @@ function setCharImage(el, char, faceRatio){
       const faceY = char.faceY || 0.12;
       const targetY = areaH * ratio;
       const faceAbsY = imgH * faceY;
-      img.style.marginTop = (targetY - faceAbsY) + 'px';
-      img.style.visibility = 'visible';
+      img.style.setProperty('margin-top', (targetY - faceAbsY) + 'px', 'important');
+      img.style.setProperty('visibility', 'visible', 'important');
       return true;
     };
     if(img.complete && img.naturalHeight > 0){
