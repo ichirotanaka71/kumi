@@ -1036,7 +1036,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:39</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:45</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1271,24 +1271,21 @@ function setCharImage(el, char, faceRatio){
     const reposition = () => {
       const areaH = el.offsetHeight;
       const imgH = img.offsetHeight;
-      if(!areaH || !imgH){
-        // 高さ取得失敗 → リトライ
-        return false;
-      }
+      if(!areaH || !imgH) return false;
       const faceY = char.faceY || 0.12;
-      const targetY = areaH * ratio;
-      const faceAbsY = imgH * faceY;
-      img.style.marginTop = (targetY - faceAbsY) + 'px';
+      // 顔が画像内 imgH*faceY の位置にある
+      // 顔を画面の areaH*ratio の位置に持ってくる
+      const shiftY = areaH * ratio - imgH * faceY;
+      img.style.transform = 'translateY(' + shiftY + 'px)';
       img.style.visibility = 'visible';
       return true;
     };
     const tryReposition = () => {
-      // load 後でも offsetHeight が 0 のことがあるので、複数回試行
       let attempts = 0;
       const tick = () => {
         if(reposition()) return;
-        if(++attempts < 20) requestAnimationFrame(tick);
-        else { img.style.visibility = 'visible'; } // 諦めて表示
+        if(++attempts < 30) requestAnimationFrame(tick);
+        else { img.style.visibility = 'visible'; }
       };
       requestAnimationFrame(tick);
     };
