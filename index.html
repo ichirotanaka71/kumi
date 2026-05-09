@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -443,6 +444,72 @@ body {
 .card.spawn svg {
   animation: spawnIcon 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* ── 三絶演出 ── */
+@keyframes sanzetsuFlash {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+#sanzetsu-flash {
+  position: fixed; inset: 0;
+  background: radial-gradient(circle at center, #fff8d0 0%, #ffd700 30%, rgba(255,200,0,0.4) 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0;
+}
+#sanzetsu-flash.show { animation: sanzetsuFlash 0.7s ease-out; }
+
+@keyframes sanzetsuShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) translateY(-2px); }
+  20% { transform: translateX(8px) translateY(3px); }
+  30% { transform: translateX(-6px) translateY(-1px); }
+  40% { transform: translateX(6px) translateY(2px); }
+  50% { transform: translateX(-4px) translateY(-2px); }
+  60% { transform: translateX(4px) translateY(1px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
+
+@keyframes sanzetsuTextIn {
+  0%   { transform: translate(-50%,-50%) scale(0.3) rotate(-12deg); opacity: 0; filter: blur(20px); }
+  30%  { transform: translate(-50%,-50%) scale(1.4) rotate(0deg);   opacity: 1; filter: blur(0); }
+  60%  { transform: translate(-50%,-50%) scale(1.0) rotate(0deg);   opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1.6) rotate(8deg);   opacity: 0; }
+}
+#sanzetsu-text {
+  position: fixed; top: 40%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-family: 'Shippori Mincho', serif;
+  font-size: 96px; font-weight: 900;
+  color: #fff8d0;
+  text-shadow:
+    0 0 20px #ffd700,
+    0 0 40px #ff9000,
+    0 0 80px #ff6000,
+    3px 3px 0 #8b4500;
+  letter-spacing: 8px;
+  pointer-events: none;
+  z-index: 9100;
+  opacity: 0;
+  white-space: nowrap;
+}
+#sanzetsu-text.show { animation: sanzetsuTextIn 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes sanzetsuParticle {
+  0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--tr)); opacity: 0; }
+}
+.sanzetsu-particle {
+  position: fixed;
+  width: 12px; height: 12px;
+  pointer-events: none;
+  z-index: 9050;
+  animation: sanzetsuParticle 1.4s ease-out forwards;
+}
+
 @keyframes spawnIcon {
   0%   { transform: scale(0); opacity: 0; }
   60%  { transform: scale(1.15); opacity: 1; }
@@ -963,7 +1030,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 17:40</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 17:58</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1020,6 +1087,11 @@ body {
 </div>
 
 <!-- ══ ゲーム画面 ══ -->
+
+<!-- 三絶演出 -->
+<div id="sanzetsu-flash"></div>
+<div id="sanzetsu-text">三絶</div>
+
 <div id="game-ui">
 
   <!-- 上半分：キャラ -->
@@ -1946,6 +2018,93 @@ function soundEpilogue(){
   crystal(987.77, 0.07, 0.15);
   crystal(1174.66, 0.05, 0.3);
 }
+
+function soundSanzetsu(){
+  const c=ac(), now=c.currentTime;
+  const sv=_seVolume;
+  // 大きな鐘の音（ガーン）
+  const bellFreqs=[110, 165, 220, 277, 330, 440];
+  bellFreqs.forEach((f,i)=>{
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.type='sine';
+    osc.frequency.value=f;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.18*sv*(1-i*0.1), now+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now+1.8);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(now); osc.stop(now+1.85);
+  });
+  // 高音のキラキラ（ピンッ→シャラララ）
+  [880, 1175, 1397, 1760, 2349, 2637].forEach((f,i)=>{
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.type='triangle';
+    osc.frequency.value=f;
+    const t=now+0.15+i*0.05;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.10*sv, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.5);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t); osc.stop(t+0.55);
+  });
+  // ホワイトノイズで荘厳さ
+  const bufLen = c.sampleRate * 0.4;
+  const buf = c.createBuffer(1, bufLen, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0; i<bufLen; i++){
+    data[i] = (Math.random()*2-1) * Math.exp(-i/(c.sampleRate*0.15));
+  }
+  const noise=c.createBufferSource();
+  noise.buffer=buf;
+  const hpf=c.createBiquadFilter();
+  hpf.type='bandpass'; hpf.frequency.value=4000;
+  const ng=c.createGain();
+  ng.gain.setValueAtTime(0.25*sv, now);
+  ng.gain.exponentialRampToValueAtTime(0.001, now+0.4);
+  noise.connect(hpf); hpf.connect(ng); ng.connect(c.destination);
+  noise.start(now); noise.stop(now+0.45);
+}
+
+function triggerSanzetsuEffect(){
+  // フラッシュ
+  const flash = document.getElementById('sanzetsu-flash');
+  if(flash){
+    flash.classList.remove('show');
+    void flash.offsetWidth;
+    flash.classList.add('show');
+  }
+  // 文字
+  const text = document.getElementById('sanzetsu-text');
+  if(text){
+    text.classList.remove('show');
+    void text.offsetWidth;
+    text.classList.add('show');
+  }
+  // 画面シェイク
+  document.body.classList.remove('sanzetsu-shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('sanzetsu-shake');
+  setTimeout(()=>document.body.classList.remove('sanzetsu-shake'), 700);
+  // 紙吹雪パーティクル
+  for(let i=0; i<24; i++){
+    const p = document.createElement('div');
+    p.className = 'sanzetsu-particle';
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2.5;
+    p.style.left = cx + 'px';
+    p.style.top  = cy + 'px';
+    const angle = (Math.PI * 2 * i / 24) + (Math.random()-0.5)*0.5;
+    const dist = 200 + Math.random()*250;
+    p.style.setProperty('--tx', Math.cos(angle)*dist + 'px');
+    p.style.setProperty('--ty', Math.sin(angle)*dist + 'px');
+    p.style.setProperty('--tr', (Math.random()*720-360) + 'deg');
+    const colors = ['#ffd700','#ff9000','#fff8d0','#ffaa00','#ffea60'];
+    p.style.background = colors[i % colors.length];
+    p.style.borderRadius = (Math.random() > 0.5) ? '50%' : '2px';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 1500);
+  }
+}
+
 function soundZuba(){
   const c = ac(), now = c.currentTime;
   const sv = _seVolume;
@@ -2204,14 +2363,6 @@ function changeAffection(delta){
     setTimeout(()=>{ ovAff.style.transform = 'scale(1)'; }, 200);
   }
   if(currentCharKey) saveAffection(currentCharKey);
-  if(delta > 0 && prev < affection){
-    const prevChapter = getChapterIdx(prev);
-    const newChapter  = getChapterIdx(affection);
-    if(newChapter > prevChapter){
-      if(currentCharKey) saveAffection(currentCharKey);
-      setTimeout(()=>{ clearInterval(ti); clearInterval(cdInterval); gameOver(); }, 400);
-    }
-  }
 }
 
 function getChapterIdx(aff){
@@ -2573,6 +2724,10 @@ function submit(){
     charReact('good');
     soundZuba();
     setTimeout(soundCorrect, 120);
+    if(diff === 3){
+      triggerSanzetsuEffect();
+      setTimeout(soundSanzetsu, 80);
+    }
     speakAI('correct', null);
     clearHint();
     setTimeout(()=>{
