@@ -159,15 +159,19 @@ body {
 }
 #char-img .char-bust {
   position: absolute;
-  left: 50%; transform: translateX(-50%);
+  top: 0; left: 0; right: 0; bottom: 0;
   width: 100%;
+  height: 100%;
   transition: none;
 }
-#char-img .char-bust img {
-  width: 100%;
-  height: auto;
+#char-img .char-bust img,
+#char-img > img {
+  height: 100%;
+  width: auto;
+  max-width: none;
   mix-blend-mode: lighten;
   display: block;
+  margin: 0 auto;
 }
 #char-img.react-good .char-bust { animation: charHappy 0.5s ease; }
 #char-img.react-bad  .char-bust { animation: charSad 0.5s ease; }
@@ -861,10 +865,12 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   font-size: 100px; position: relative; z-index: 1;
   padding: 0; overflow: hidden;
 }
-.intro-char-area img {
-  width: 100%;
-  height: auto;
+.intro-char-area > img {
+  height: 100%;
+  width: auto;
+  max-width: none;
   mix-blend-mode: lighten;
+  margin: 0 auto;
 }
 
 .intro-msg-window {
@@ -1030,7 +1036,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:33</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:39</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1259,35 +1265,40 @@ function setCharImage(el, char, faceRatio){
   if(!el) return;
   const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
-    el.innerHTML = '<img src="' + char.illustration + '" alt="">';
+    el.innerHTML = '<img src="' + char.illustration + '" alt="" style="visibility:hidden;">';
     const img = el.querySelector('img');
     if(!img) return;
-    // CSSセレクタに勝つように setProperty で important 指定
-    img.style.setProperty('height', '100%', 'important');
-    img.style.setProperty('width', 'auto', 'important');
-    img.style.setProperty('max-width', 'none', 'important');
-    img.style.setProperty('mix-blend-mode', 'lighten', 'important');
-    img.style.setProperty('display', 'block', 'important');
-    img.style.setProperty('position', 'absolute', 'important');
-    img.style.setProperty('left', '50%', 'important');
-    img.style.setProperty('transform', 'translateX(-50%)', 'important');
-    img.style.setProperty('visibility', 'hidden', 'important');
     const reposition = () => {
       const areaH = el.offsetHeight;
       const imgH = img.offsetHeight;
-      if(!areaH || !imgH) return false;
+      if(!areaH || !imgH){
+        // 高さ取得失敗 → リトライ
+        return false;
+      }
       const faceY = char.faceY || 0.12;
       const targetY = areaH * ratio;
       const faceAbsY = imgH * faceY;
-      img.style.setProperty('margin-top', (targetY - faceAbsY) + 'px', 'important');
-      img.style.setProperty('visibility', 'visible', 'important');
+      img.style.marginTop = (targetY - faceAbsY) + 'px';
+      img.style.visibility = 'visible';
       return true;
     };
+    const tryReposition = () => {
+      // load 後でも offsetHeight が 0 のことがあるので、複数回試行
+      let attempts = 0;
+      const tick = () => {
+        if(reposition()) return;
+        if(++attempts < 20) requestAnimationFrame(tick);
+        else { img.style.visibility = 'visible'; } // 諦めて表示
+      };
+      requestAnimationFrame(tick);
+    };
     if(img.complete && img.naturalHeight > 0){
-      requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
+      tryReposition();
     } else {
-      img.addEventListener('load', ()=>{
-        requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
+      img.addEventListener('load', tryReposition, { once: true });
+      img.addEventListener('error', ()=>{
+        console.error('画像読み込み失敗:', char.illustration);
+        img.style.visibility = 'visible';
       }, { once: true });
     }
     if(!el._resizeBound){
