@@ -769,6 +769,21 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   font-size: 16px; color: rgba(180,150,255,0.95); font-weight: 700;
 }
 .ov-trust-next.hide { display: none; }
+.ov-trust-next.episode-unlocked .ontl {
+  color: rgba(255,200,100,0.95);
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+.ov-trust-next.episode-unlocked .ontv {
+  color: #ffd700;
+  font-size: 22px;
+  text-shadow: 0 0 8px rgba(255,200,80,0.6), 0 0 16px rgba(255,150,40,0.4);
+  animation: epUnlockPulse 1.6s ease-in-out infinite;
+}
+@keyframes epUnlockPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
 #btn-restart {
   background: rgba(255,255,255,0.1); color: #fff;
   border: 1px solid rgba(255,255,255,0.2);
@@ -1195,7 +1210,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 20:13</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 23:50</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -3128,18 +3143,12 @@ function gameOver(){
   clearInterval(ti);clearInterval(cdInterval);
   const s=Math.floor((Date.now()-t0)/1000);
   soundClear();
-
-  const charKey = currentCharKey||'a';
-  const unlocked = unlockedChapterIdx();
-  const viewed = loadViewedChapters(charKey);
-  const chaptersToPlay = getChaptersToPlay(charKey);
-
-  if(chaptersToPlay.length > 0){
-    setTimeout(()=>playChaptersSequence(chaptersToPlay, charKey, score, s), 800);
-  } else {
-    showClearScreen(score);
-  }
+  // 先にクリア画面を表示（エピソードはクリア画面の戻るタップ後に再生）
+  _pendingClearSeconds = s;
+  showClearScreen(score);
 }
+
+let _pendingClearSeconds = 0;
 
 async function playChaptersSequence(chapters, charKey, score, seconds){
   const viewed = loadViewedChapters(charKey);
@@ -3149,7 +3158,8 @@ async function playChaptersSequence(chapters, charKey, score, seconds){
     saveViewedChapters(charKey, viewed);
     await playOneChapter(chIdx, score, seconds, ci===chapters.length-1);
   }
-  showClearScreen(score);
+  // エピソード再生終了 → ステージ選択へ
+  showStageSelect();
 }
 
 async function playOneChapter(chIdx, score, seconds, isLast){
@@ -3230,17 +3240,33 @@ function showClearScreen(score){
   document.getElementById('ov-trust-gain').textContent = totalGain;
   document.getElementById('ov-trust-cum').textContent = affection;
 
-  // 次のエピソード開放までの残り
+  // 未視聴の章があれば「エピソードが公開されました」、なければ「次のエピソードまであと N」
   const nextRow = document.getElementById('ov-trust-next-row');
-  let nextThreshold = null;
-  for(let i=1; i<CHAPTER_THRESHOLDS.length; i++){
-    if(affection < CHAPTER_THRESHOLDS[i]){ nextThreshold = CHAPTER_THRESHOLDS[i]; break; }
-  }
-  if(nextThreshold !== null){
-    document.getElementById('ov-trust-next').textContent = (nextThreshold - affection);
+  const nextLabel = nextRow ? nextRow.querySelector('.ontl') : null;
+  const nextValue = document.getElementById('ov-trust-next');
+  const charKey = currentCharKey||'a';
+  const chaptersToPlay = getChaptersToPlay(charKey);
+
+  if(chaptersToPlay.length > 0){
+    // エピソード公開
+    if(nextLabel) nextLabel.textContent = 'エピソードが公開されました';
+    if(nextValue) nextValue.textContent = '✦';
     nextRow.classList.remove('hide');
+    nextRow.classList.add('episode-unlocked');
   } else {
-    nextRow.classList.add('hide');
+    // 通常の進捗表示
+    nextRow.classList.remove('episode-unlocked');
+    if(nextLabel) nextLabel.textContent = '次のエピソード開放まであと';
+    let nextThreshold = null;
+    for(let i=1; i<CHAPTER_THRESHOLDS.length; i++){
+      if(affection < CHAPTER_THRESHOLDS[i]){ nextThreshold = CHAPTER_THRESHOLDS[i]; break; }
+    }
+    if(nextThreshold !== null){
+      if(nextValue) nextValue.textContent = (nextThreshold - affection);
+      nextRow.classList.remove('hide');
+    } else {
+      nextRow.classList.add('hide');
+    }
   }
 
   document.getElementById('overlay').classList.add('show');
@@ -3357,10 +3383,10 @@ function onEpTap(){
   }
   epIndex++;
   if(epIndex >= epLines.length){
-    // エピローグ終了→通常クリア画面へ
+    // エピローグ終了→ステージ選択へ
     document.getElementById('epilogue').removeEventListener('click', onEpTap);
     document.getElementById('epilogue').classList.remove('show');
-    showClearScreen(score);
+    showStageSelect();
   } else {
     showEpLine();
   }
@@ -3431,9 +3457,17 @@ document.getElementById('btn-quit-pause').addEventListener('click',()=>{
 });
 document.getElementById('btn-restart').addEventListener('click',()=>{
   document.getElementById('overlay').classList.remove('show');
-  document.getElementById('game-ui').classList.remove('show');
-  // クリア後はステージ選択画面に戻る（同じキャラのまま）
-  showStageSelect();
+  const charKey = currentCharKey||'a';
+  const chaptersToPlay = getChaptersToPlay(charKey);
+  if(chaptersToPlay.length > 0){
+    // 未視聴のエピソードあり → 再生してからステージ選択
+    document.getElementById('game-ui').classList.remove('show');
+    setTimeout(()=>playChaptersSequence(chaptersToPlay, charKey, score, _pendingClearSeconds||0), 200);
+  } else {
+    // ステージ選択へ
+    document.getElementById('game-ui').classList.remove('show');
+    showStageSelect();
+  }
 });
 
 </script>
