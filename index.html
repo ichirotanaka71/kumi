@@ -1030,7 +1030,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:04</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:20</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1259,12 +1259,12 @@ function setCharImage(el, char, faceRatio){
   if(!el) return;
   const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
-    el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;visibility:hidden;">';
+    el.innerHTML = '<img src="' + char.illustration + '" style="height:100%;width:auto;max-width:none;mix-blend-mode:lighten;display:block;position:absolute;left:50%;transform:translateX(-50%);visibility:hidden;">';
     const img = el.querySelector('img');
     if(!img) return;
     const reposition = () => {
       const areaH = el.offsetHeight;
-      const imgH = img.offsetHeight || img.naturalHeight * (img.offsetWidth / (img.naturalWidth||1));
+      const imgH = img.offsetHeight;
       if(!areaH || !imgH) return false;
       const faceY = char.faceY || 0.12;
       const targetY = areaH * ratio;
@@ -1273,7 +1273,6 @@ function setCharImage(el, char, faceRatio){
       img.style.visibility = 'visible';
       return true;
     };
-    // 画像load完了で確実に再計算
     if(img.complete && img.naturalHeight > 0){
       requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
     } else {
@@ -1281,7 +1280,6 @@ function setCharImage(el, char, faceRatio){
         requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
       }, { once: true });
     }
-    // リサイズ時も追従（端末回転やキーボード表示対応）
     if(!el._resizeBound){
       el._resizeBound = true;
       window.addEventListener('resize', ()=>{
