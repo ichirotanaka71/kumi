@@ -1101,7 +1101,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 19:46</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 19:51</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1231,9 +1231,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
 </div>
 
 <!-- ダメージ演出 -->
-<audio id="bgm-audio" loop preload="auto">
-  <source src="bgm.mp3" type="audio/mpeg">
-</audio>
+<audio id="bgm-audio" loop preload="auto"></audio>
 <div id="damage-overlay"></div>
 <div id="damage-number">MISS</div>
 
@@ -1515,7 +1513,7 @@ document.getElementById('title-screen').addEventListener('click',()=>{
   const t=document.getElementById('title-screen');
   t.classList.add('hide');
   setTimeout(()=>{ t.style.display='none'; },800);
-  document.getElementById('char-select').style.display='flex';
+  document.getElementById('char-select').style.display='flex'; playBGM('select');
   document.getElementById('char-select').style.zIndex='350';
 });
 
@@ -1547,6 +1545,8 @@ const INTRO_FALLBACK = {
 };
 
 function startIntroStory(){
+  // 初回ストーリー → OP BGM、再会 → puzzle BGM（どちらも startGame で puzzle に切替わる）
+  if(affection === 0){ playBGM('op'); }
   const isFirst = affection === 0;
 
   // 2回目以降は導入ストーリーをスキップしてそのままゲーム開始
@@ -1925,7 +1925,70 @@ function setBgmVolume(val){
 function setSeVolume(val){
   _seVolume = Number(val) / 100;
 }
+// 画面別BGMファイル定義
+const BGM_TRACKS = {
+  select:  './bgm/select.mp3',  // 依頼人選択画面
+  op:      './bgm/op.mp3',      // OP（導入ストーリー）
+  puzzle:  './bgm/puzzle.mp3',  // パズル画面
+  ep:      './bgm/ep.mp3',      // EP（章エピソード）
+  clear:   './bgm/clear.mp3',   // 除霊完了画面
+};
+let _currentBgmKey = null;
+
+function playBGM(key){
+  const src = BGM_TRACKS[key];
+  if(!src){ return; }
+  if(_currentBgmKey === key) return; // 同じBGMなら何もしない
+  _currentBgmKey = key;
+  const bgmEl = document.getElementById('bgm-audio');
+  if(!bgmEl) return;
+  // フェードアウト→切替→フェードイン
+  const fadeOut = () => new Promise(resolve => {
+    if(bgmEl.paused || muted){ resolve(); return; }
+    const startVol = bgmEl.volume;
+    const steps = 8;
+    let i = 0;
+    const iv = setInterval(()=>{
+      i++;
+      bgmEl.volume = startVol * (1 - i/steps);
+      if(i >= steps){
+        clearInterval(iv);
+        bgmEl.pause();
+        resolve();
+      }
+    }, 30);
+  });
+  fadeOut().then(()=>{
+    bgmEl.src = src;
+    bgmEl.volume = 0;
+    bgmEl.muted = false;
+    bgmEl.play().then(()=>{
+      // フェードイン
+      const target = muted ? 0 : _bgmVolume;
+      const steps = 10;
+      let i = 0;
+      const iv = setInterval(()=>{
+        i++;
+        bgmEl.volume = target * (i/steps);
+        if(i >= steps) clearInterval(iv);
+      }, 40);
+    }).catch((e)=>{ console.warn('BGM再生失敗:', src, e); });
+  });
+  bgmRunning = true;
+}
+
 function startBGM(){
+  // 旧API互換：明示的なkeyなし呼出は select を再生
+  if(!_currentBgmKey){ playBGM('select'); return; }
+  const bgmEl = document.getElementById('bgm-audio');
+  if(bgmEl && bgmEl.paused){
+    bgmEl.volume = muted ? 0 : _bgmVolume;
+    bgmEl.play().catch(()=>{});
+  }
+  bgmRunning = true;
+}
+
+function _legacyStartBGM_DEPRECATED(){
   const bgmEl = document.getElementById('bgm-audio');
   if(bgmEl){
     bgmEl.volume = muted ? 0 : _bgmVolume;
@@ -2578,6 +2641,7 @@ let _diffCount = {1:0, 2:0, 3:0}; // 一絶/二絶/三絶のカウント
 let _gridSize = 9;
 
 function startGame(){
+  playBGM('puzzle');
   _submitting = false;
   loadLives();
   updateLivesUI();
@@ -2905,6 +2969,7 @@ async function playChaptersSequence(chapters, charKey, score, seconds){
 }
 
 async function playOneChapter(chIdx, score, seconds, isLast){
+  playBGM('ep');
   const epEl = document.getElementById('epilogue');
   epEl.classList.add('show');
   setCharImage(document.getElementById('ep-char-img'), currentChar);
@@ -2955,6 +3020,7 @@ async function playOneChapter(chIdx, score, seconds, isLast){
 }
 
 function showClearScreen(score){
+  playBGM('clear');
   // 信頼度を保存してからキャラ選択の表示に反映
   if(currentCharKey) saveAffection(currentCharKey);
 
@@ -3027,7 +3093,7 @@ function retryGame(){
 function quitToCharSelect(){
   document.getElementById('gameover').classList.remove('show');
   document.getElementById('game-ui').classList.remove('show');
-  document.getElementById('char-select').style.display='flex';
+  document.getElementById('char-select').style.display='flex'; playBGM('select');
   document.getElementById('char-select').style.zIndex='350';
 }
 
@@ -3173,13 +3239,13 @@ document.getElementById('btn-quit-pause').addEventListener('click',()=>{
   clearInterval(ti); clearInterval(cdInterval);
   _paused = false;
   refreshCharCards();
-  document.getElementById('char-select').style.display='flex';
+  document.getElementById('char-select').style.display='flex'; playBGM('select');
 });
 document.getElementById('btn-restart').addEventListener('click',()=>{
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('game-ui').classList.remove('show');
   refreshCharCards();
-  document.getElementById('char-select').style.display='flex';
+  document.getElementById('char-select').style.display='flex'; playBGM('select');
 });
 
 </script>
