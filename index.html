@@ -613,6 +613,68 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   font-size: 12px; color: var(--affection-color); letter-spacing: 1px;
 }
 .ov-hearts { font-size: 18px; letter-spacing: 2px; }
+
+/* 信頼度内訳ブロック */
+.ov-trust-block {
+  background: rgba(20,12,40,0.5);
+  border: 1px solid rgba(180,150,255,0.15);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 6px 0 4px;
+  min-width: 280px;
+  max-width: 320px;
+}
+.ov-trust-title {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 11px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  margin-bottom: 10px;
+}
+.ov-trust-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+}
+.ov-trust-table td {
+  padding: 3px 4px;
+  text-align: right;
+}
+.ov-trust-table .otl-name { text-align: left; color: rgba(255,200,100,0.9); letter-spacing: 2px; }
+.ov-trust-table .otl-pt { color: rgba(255,255,255,0.55); font-size: 12px; }
+.ov-trust-table .otl-x, .ov-trust-table .otl-eq { color: rgba(255,255,255,0.4); font-size: 11px; padding: 0 2px; }
+.ov-trust-table .otl-cnt { color: rgba(255,255,255,0.85); min-width: 24px; }
+.ov-trust-table .otl-sub { color: var(--kin); font-weight: 700; min-width: 32px; }
+.ov-trust-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: 'Shippori Mincho', serif;
+  padding: 6px 0 2px;
+}
+.ov-trust-total .ottl { font-size: 13px; letter-spacing: 3px; color: rgba(255,255,255,0.7); }
+.ov-trust-total .otv { font-size: 28px; color: var(--kin); font-weight: 700; }
+.ov-trust-divider {
+  border-top: 1px solid rgba(180,150,255,0.15);
+  margin: 8px 0 6px;
+}
+.ov-trust-cum, .ov-trust-next {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: 'Shippori Mincho', serif;
+  padding: 3px 0;
+}
+.ov-trust-cum .otcl, .ov-trust-next .ontl {
+  font-size: 11px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.55);
+}
+.ov-trust-cum .otcv {
+  font-size: 18px; color: rgba(255,200,200,0.95); font-weight: 700;
+}
+.ov-trust-next .ontv {
+  font-size: 16px; color: rgba(180,150,255,0.95); font-weight: 700;
+}
+.ov-trust-next.hide { display: none; }
 #btn-restart {
   background: rgba(255,255,255,0.1); color: #fff;
   border: 1px solid rgba(255,255,255,0.2);
@@ -1039,7 +1101,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 19:14</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 19:46</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1072,7 +1134,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
     <div id="debug-content" style="display:none;margin-top:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;display:none;flex-direction:column;gap:6px;width:260px;">
       <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-bottom:4px;">― DEBUG ―</div>
       <button class="dbg-btn" onclick="debugResetAll()">全データリセット</button>
-      <button class="dbg-btn" onclick="debugResetAffection()">好感度リセット（全員→0）</button>
+      <button class="dbg-btn" onclick="debugResetAffection()">信頼度リセット（全員→0）</button>
       <button class="dbg-btn" onclick="debugResetChapters()">章の進行リセット（全員）</button>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px;justify-content:center;">
         <span style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;">パネル数</span>
@@ -1228,11 +1290,17 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   <div class="ov-char" id="ov-char">🧑‍🦯</div>
   <div class="ov-title">除霊完了</div>
   <div class="ov-msg" id="ov-msg">…</div>
-  <div class="ov-score" id="fscore">0<span> 組</span></div>
-  <div class="ov-aff">
-    <span>好感度</span>
-    <span class="ov-hearts" id="ov-hearts">♡</span>
-    <span id="ov-aff-num" style="font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;color:var(--affection-color);min-width:32px;">0</span>
+  <div class="ov-trust-block" id="ov-trust-block">
+    <div class="ov-trust-title">今回のプレイで獲得した信頼度</div>
+    <table class="ov-trust-table">
+      <tr><td class="otl-name">一絶</td><td class="otl-pt">1点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-1">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-1">0</td></tr>
+      <tr><td class="otl-name">二絶</td><td class="otl-pt">2点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-2">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-2">0</td></tr>
+      <tr><td class="otl-name">三絶</td><td class="otl-pt">5点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-3">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-3">0</td></tr>
+    </table>
+    <div class="ov-trust-total"><span class="ottl">総合</span><span class="otv" id="ov-trust-gain">0</span></div>
+    <div class="ov-trust-divider"></div>
+    <div class="ov-trust-cum"><span class="otcl">累計信頼度</span><span class="otcv" id="ov-trust-cum">0</span></div>
+    <div class="ov-trust-next" id="ov-trust-next-row"><span class="ontl">次のエピソード開放まであと</span><span class="ontv" id="ov-trust-next">0</span></div>
   </div>
   <button id="btn-restart">戻 る</button>
 </div>
@@ -1390,7 +1458,7 @@ function debugResetAffection(){
     Object.keys(CHARS).forEach(k=>{
       localStorage.setItem('kumi_aff_'+k, 0);
     });
-    document.getElementById('debug-status').textContent = '✓ 好感度を0にリセットしました';
+    document.getElementById('debug-status').textContent = '✓ 信頼度を0にリセットしました';
     refreshCharCards();
     setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
   } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
@@ -2506,6 +2574,7 @@ function onTimeout(){
 
 // ══ ゲーム状態 ══════════════════════════════════════════
 let deck=[],board=[],sel=[],score=0,t0,ti;
+let _diffCount = {1:0, 2:0, 3:0}; // 一絶/二絶/三絶のカウント
 let _gridSize = 9;
 
 function startGame(){
@@ -2513,6 +2582,7 @@ function startGame(){
   loadLives();
   updateLivesUI();
   deck=makeDeck(); sel=[]; score=0;
+  _diffCount = {1:0, 2:0, 3:0};
   document.getElementById('score').textContent='0';
   document.getElementById('overlay').classList.remove('show');
   hintRevealed=0;
@@ -2770,9 +2840,10 @@ function submit(){
       }
     });
     score += pts;
+    if(_diffCount[diff] !== undefined) _diffCount[diff]++;
     document.getElementById('score').textContent = score;
     addTime(time);
-    changeAffection(pts); // 難易度に応じて好感度アップ（pts: 1/2/5）
+    changeAffection(pts); // 難易度に応じて信頼度アップ（pts: 1/2/5）
     charReact('good');
     soundZuba();
     setTimeout(soundCorrect, 120);
@@ -2884,12 +2955,40 @@ async function playOneChapter(chIdx, score, seconds, isLast){
 }
 
 function showClearScreen(score){
-  // 好感度を保存してからキャラ選択の表示に反映
+  // 信頼度を保存してからキャラ選択の表示に反映
   if(currentCharKey) saveAffection(currentCharKey);
-  document.getElementById('fscore').innerHTML=`${score}<span> 組</span>`;
-  document.getElementById('ov-hearts').textContent=affection>=50?'♥':'♡';
-  const ovNum=document.getElementById('ov-aff-num');
-  if(ovNum) ovNum.textContent=affection;
+
+  // 難易度別の獲得信頼度内訳
+  const c1 = _diffCount[1] || 0;
+  const c2 = _diffCount[2] || 0;
+  const c3 = _diffCount[3] || 0;
+  const sub1 = c1 * 1;
+  const sub2 = c2 * 2;
+  const sub3 = c3 * 5;
+  const totalGain = sub1 + sub2 + sub3;
+
+  document.getElementById('ov-cnt-1').textContent = c1;
+  document.getElementById('ov-cnt-2').textContent = c2;
+  document.getElementById('ov-cnt-3').textContent = c3;
+  document.getElementById('ov-sub-1').textContent = sub1;
+  document.getElementById('ov-sub-2').textContent = sub2;
+  document.getElementById('ov-sub-3').textContent = sub3;
+  document.getElementById('ov-trust-gain').textContent = totalGain;
+  document.getElementById('ov-trust-cum').textContent = affection;
+
+  // 次のエピソード開放までの残り
+  const nextRow = document.getElementById('ov-trust-next-row');
+  let nextThreshold = null;
+  for(let i=1; i<CHAPTER_THRESHOLDS.length; i++){
+    if(affection < CHAPTER_THRESHOLDS[i]){ nextThreshold = CHAPTER_THRESHOLDS[i]; break; }
+  }
+  if(nextThreshold !== null){
+    document.getElementById('ov-trust-next').textContent = (nextThreshold - affection);
+    nextRow.classList.remove('hide');
+  } else {
+    nextRow.classList.add('hide');
+  }
+
   document.getElementById('overlay').classList.add('show');
   speakAI('clear', score);
   const clearKey = currentCharKey||'a';
@@ -3007,10 +3106,7 @@ function onEpTap(){
     // エピローグ終了→通常クリア画面へ
     document.getElementById('epilogue').removeEventListener('click', onEpTap);
     document.getElementById('epilogue').classList.remove('show');
-    document.getElementById('fscore').innerHTML=`${epLines.length}<span> 組</span>`;
-    document.getElementById('ov-hearts').textContent=heartsFromAff();
-    document.getElementById('ov-msg').textContent='また会う日を楽しみにしています。';
-    document.getElementById('overlay').classList.add('show');
+    showClearScreen(score);
   } else {
     showEpLine();
   }
