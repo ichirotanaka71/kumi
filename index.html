@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -159,19 +157,16 @@ body {
 }
 #char-img .char-bust {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   transition: none;
 }
 #char-img .char-bust img,
 #char-img > img {
+  width: 100%;
   height: 100%;
-  width: auto;
-  max-width: none;
+  object-fit: cover;
   mix-blend-mode: lighten;
   display: block;
-  margin: 0 auto;
 }
 #char-img.react-good .char-bust { animation: charHappy 0.5s ease; }
 #char-img.react-bad  .char-bust { animation: charSad 0.5s ease; }
@@ -866,11 +861,11 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   padding: 0; overflow: hidden;
 }
 .intro-char-area > img {
+  width: 100%;
   height: 100%;
-  width: auto;
-  max-width: none;
+  object-fit: cover;
   mix-blend-mode: lighten;
-  margin: 0 auto;
+  display: block;
 }
 
 .intro-msg-window {
@@ -1036,7 +1031,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:45</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:49</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1269,14 +1264,31 @@ function setCharImage(el, char, faceRatio){
     const img = el.querySelector('img');
     if(!img) return;
     const reposition = () => {
+      const areaW = el.offsetWidth;
       const areaH = el.offsetHeight;
-      const imgH = img.offsetHeight;
-      if(!areaH || !imgH) return false;
+      const natW = img.naturalWidth;
+      const natH = img.naturalHeight;
+      if(!areaW || !areaH || !natW || !natH) return false;
       const faceY = char.faceY || 0.12;
-      // 顔が画像内 imgH*faceY の位置にある
-      // 顔を画面の areaH*ratio の位置に持ってくる
-      const shiftY = areaH * ratio - imgH * faceY;
-      img.style.transform = 'translateY(' + shiftY + 'px)';
+      // object-fit: cover の場合
+      // 表示倍率 = max(areaW/natW, areaH/natH)
+      const scale = Math.max(areaW / natW, areaH / natH);
+      const displayedH = natH * scale;
+      // 顔の表示Y位置（画像内 faceY の位置を画面上に投影）
+      const faceDisplayY = displayedH * faceY;
+      // 顔を画面の areaH * ratio に持ってくるには、画像を上に shiftY ずらす
+      const shiftY = faceDisplayY - areaH * ratio;
+      // object-position の Y を計算
+      // shiftY=0 なら 0%（画像上端を上端に揃える）
+      // shiftY が大きいほど画像を上にずらす = object-position Y を増やす
+      // 画像がはみ出る量 = displayedH - areaH
+      const overflow = displayedH - areaH;
+      let posY = 50; // デフォルト中央
+      if(overflow > 0){
+        posY = (shiftY / overflow) * 100;
+        posY = Math.max(0, Math.min(100, posY));
+      }
+      img.style.objectPosition = '50% ' + posY + '%';
       img.style.visibility = 'visible';
       return true;
     };
