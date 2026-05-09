@@ -353,14 +353,14 @@ body {
 /* セリフウィンドウ */
 #msg-window {
   position: absolute; bottom: 0; left: 0; right: 0;
-  background: var(--msg-bg);
-  border-top: 1px solid var(--msg-border);
+  background: transparent;
   padding: 6px 16px 8px;
   height: 52px;
   z-index: 30;
-  backdrop-filter: blur(8px);
   transition: opacity .4s;
   overflow: hidden;
+  text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.95);
+  pointer-events: none;
 }
 #msg-window.hide { opacity: 0; pointer-events: none; }
 .msg-name {
@@ -1030,7 +1030,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 17:58</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 18:04</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1259,20 +1259,36 @@ function setCharImage(el, char, faceRatio){
   if(!el) return;
   const ratio = faceRatio !== undefined ? faceRatio : 0.35;
   if(char.illustration){
-    el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;">';
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        const img = el.querySelector('img');
-        if(!img) return;
-        const areaH = el.offsetHeight;
-        const imgH = img.offsetHeight;
-        if(!areaH || !imgH) return;
-        const faceY = char.faceY || 0.12;
-        const targetY = areaH * ratio;
-        const faceAbsY = imgH * faceY;
-        img.style.marginTop = (targetY - faceAbsY) + 'px';
+    el.innerHTML = '<img src="' + char.illustration + '" style="width:100%;height:auto;mix-blend-mode:lighten;display:block;visibility:hidden;">';
+    const img = el.querySelector('img');
+    if(!img) return;
+    const reposition = () => {
+      const areaH = el.offsetHeight;
+      const imgH = img.offsetHeight || img.naturalHeight * (img.offsetWidth / (img.naturalWidth||1));
+      if(!areaH || !imgH) return false;
+      const faceY = char.faceY || 0.12;
+      const targetY = areaH * ratio;
+      const faceAbsY = imgH * faceY;
+      img.style.marginTop = (targetY - faceAbsY) + 'px';
+      img.style.visibility = 'visible';
+      return true;
+    };
+    // 画像load完了で確実に再計算
+    if(img.complete && img.naturalHeight > 0){
+      requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
+    } else {
+      img.addEventListener('load', ()=>{
+        requestAnimationFrame(()=>{ requestAnimationFrame(reposition); });
+      }, { once: true });
+    }
+    // リサイズ時も追従（端末回転やキーボード表示対応）
+    if(!el._resizeBound){
+      el._resizeBound = true;
+      window.addEventListener('resize', ()=>{
+        const i = el.querySelector('img');
+        if(i && i.complete) reposition();
       });
-    });
+    }
   } else {
     el.innerHTML = '';
     el.textContent = char.emoji;
