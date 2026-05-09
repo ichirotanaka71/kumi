@@ -136,15 +136,16 @@ body {
 /* ══════════════════════════════════════
    ゲーム画面
 ══════════════════════════════════════ */
-#game-ui { display:none; flex:1; flex-direction:column; min-height:0; overflow:hidden; }
+#game-ui { display:none; flex:1; flex-direction:column; min-height:0; overflow:hidden; position:relative; }
 #game-ui.show { display:flex; }
 
-/* ── 上半分：キャラエリア ── */
+/* ── 上半分：キャラエリア（下まではみ出し許可） ── */
 #char-area {
   flex: 1 1 0;
-  position: relative; overflow: hidden;
+  position: relative; overflow: visible;
   background: transparent;
   min-height: 0;
+  z-index: 0;
 }
 
 /* キャラ画像 */
@@ -153,6 +154,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   position: relative;
   transition: filter .4s;
+  overflow: visible;
 }
 #char-img .char-bust {
   position: absolute;
@@ -384,9 +386,10 @@ body {
 /* ── 下半分：ゲームエリア ── */
 #game-area {
   flex: 1 1 0; min-height: 0;
-  background: rgba(14,10,20,0.3);
+  background: rgba(0,0,0,0.4);
   display: flex; flex-direction: column;
   position: relative;
+  z-index: 2;
 }
 /* 和紙テクスチャ無効 */
 #game-area::before {
@@ -960,7 +963,7 @@ body {
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.08 16:12</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 17:40</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
