@@ -50,6 +50,100 @@ body {
 /* ══════════════════════════════════════
    キャラ選択画面
 ══════════════════════════════════════ */
+
+/* ── ステージ選択画面 ── */
+#stage-select {
+  display: none;
+  position: fixed; inset: 0; z-index: 360;
+  background: linear-gradient(160deg, #0e0a14 0%, #1a1030 100%);
+  flex-direction: column;
+  padding: 60px 16px 32px;
+  overflow-y: auto;
+}
+#stage-back-btn {
+  position: absolute; top: 16px; left: 16px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85);
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-size: 13px; font-family: 'Shippori Mincho', serif;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.stage-select-title {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 18px; letter-spacing: 6px;
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  margin-bottom: 24px;
+}
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+.stage-btn {
+  position: relative;
+  background: rgba(20,12,40,0.6);
+  border: 1px solid rgba(180,150,255,0.2);
+  border-radius: 8px;
+  padding: 16px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.12s, border-color 0.2s;
+  user-select: none;
+}
+.stage-btn:active { transform: scale(0.97); }
+.stage-btn:hover { border-color: rgba(180,150,255,0.5); }
+.stage-btn.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: rgba(20,12,40,0.3);
+}
+.stage-btn.cleared {
+  border-color: rgba(255,200,100,0.5);
+  background: linear-gradient(135deg, rgba(40,28,60,0.7), rgba(60,40,20,0.5));
+}
+.sb-num {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 32px; font-weight: 700;
+  color: var(--kin, #d4af37);
+  line-height: 1;
+}
+.sb-label {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 14px; letter-spacing: 4px;
+  color: rgba(255,255,255,0.85);
+  margin-top: 6px;
+}
+.sb-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+.sb-panels {
+  font-size: 10px;
+  color: rgba(180,150,255,0.7);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.sb-badge {
+  position: absolute; top: 6px; right: 8px;
+  color: #ffd700;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sb-lock {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
 #char-select {
   position: fixed; inset: 0; z-index: 350;
   display: none;
@@ -1101,13 +1195,21 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 19:51</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 20:13</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
 </div>
 
 <!-- ══ キャラ選択画面 ══ -->
+
+<!-- ══ ステージ選択画面 ══ -->
+<div id="stage-select" style="display:none">
+  <button id="stage-back-btn" onclick="backToCharSelect()">‹ 戻る</button>
+  <div id="stage-select-title" class="stage-select-title">段位を選ぶ</div>
+  <div id="stage-grid" class="stage-grid"></div>
+</div>
+
 <div id="char-select" style="display:none">
   <!-- 音量設定 -->
   <div style="position:absolute;top:16px;left:16px;display:flex;flex-direction:column;gap:6px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;backdrop-filter:blur(4px);min-width:140px;">
@@ -1816,25 +1918,68 @@ function nextLifeIn(){
   return '';
 }
 
+
+// ══ ステージシステム ══════════════════════════════════════
+const STAGES = [
+  { id: 1, panels: 16, label: '一の段', subtitle: '十六枚卓' },
+  { id: 2, panels:  4, label: '二の段', subtitle: '四枚卓' },
+  { id: 3, panels: 12, label: '三の段', subtitle: '十二枚卓' },
+  { id: 4, panels:  5, label: '四の段', subtitle: '五枚卓' },
+  { id: 5, panels: 10, label: '五の段', subtitle: '十枚卓' },
+  { id: 6, panels:  6, label: '六の段', subtitle: '六枚卓' },
+  { id: 7, panels:  8, label: '七の段', subtitle: '八枚卓' },
+  { id: 8, panels:  9, label: '八の段', subtitle: '九枚卓' },
+];
+let _currentStageId = 1;
+
+function loadStageProgress(charKey){
+  try {
+    const s = localStorage.getItem('kumi_stage_'+charKey);
+    if(s){ return parseInt(s, 10) || 1; }
+  } catch(e){}
+  return 1; // 未クリア = ステージ1のみ解放
+}
+function saveStageProgress(charKey, maxClearedStage){
+  try {
+    const cur = loadStageProgress(charKey);
+    if(maxClearedStage > cur){
+      localStorage.setItem('kumi_stage_'+charKey, String(maxClearedStage));
+    }
+  } catch(e){}
+}
+function getMaxUnlockedStage(charKey){
+  // クリアステージ + 1（次ステージ）が解放
+  const cleared = loadStageProgress(charKey) - 1; // 初期1=未クリア、2=1ステージクリア済
+  return Math.max(1, cleared + 1);
+}
+
 let currentCharKey = 'a';
 
 function selectChar(id) {
+  // 依頼人を選んだらステージ選択画面へ
+  currentCharKey = id;
+  currentChar = CHARS[id];
+  affection = loadAffection(id);
+  showStageSelect();
+}
+
+function startStage(stageId){
   // ライフ1消費して挑戦
   if(lives > 0) lives--;
   updateLivesUI();
-  currentCharKey = id;
-  currentChar = CHARS[id];
-  // そのキャラの好感度を読み込む
-  affection = loadAffection(id);
+  _currentStageId = stageId;
+  const stage = STAGES.find(s=>s.id===stageId) || STAGES[0];
+  _gridSize = stage.panels;
   document.getElementById('char-select').style.display='none';
+  document.getElementById('stage-select').style.display='none';
   document.getElementById('game-ui').classList.add('show');
   const bustEl = document.getElementById('char-bust');
   if(currentChar.illustration){
     setCharImage(bustEl, currentChar);
-  const overlayName = document.getElementById('char-overlay-name');
-  if(overlayName) overlayName.textContent = currentChar.name;
-  const overlayAff2 = document.getElementById('char-overlay-aff');
-  if(overlayAff2) overlayAff2.textContent = affection;
+    const overlayName = document.getElementById('char-overlay-name');
+    if(overlayName) overlayName.textContent = currentChar.name;
+    const overlayAff2 = document.getElementById('char-overlay-aff');
+    if(overlayAff2) overlayAff2.textContent = affection;
   } else {
     bustEl.textContent = currentChar.emoji;
   }
@@ -1845,6 +1990,45 @@ function selectChar(id) {
   updateAffBar();
   startBGM();
   startIntroStory();
+}
+
+function showStageSelect(){
+  const sel = document.getElementById('stage-select');
+  if(!sel) return;
+  const grid = document.getElementById('stage-grid');
+  grid.innerHTML = '';
+  const maxUnlocked = getMaxUnlockedStage(currentCharKey);
+  STAGES.forEach(stage => {
+    const unlocked = stage.id <= maxUnlocked;
+    const cleared  = stage.id < maxUnlocked || (loadStageProgress(currentCharKey) > stage.id);
+    const btn = document.createElement('div');
+    btn.className = 'stage-btn' + (unlocked ? '' : ' locked') + (cleared ? ' cleared' : '');
+    btn.innerHTML = `
+      <div class="sb-num">${stage.id}</div>
+      <div class="sb-label">${stage.label}</div>
+      <div class="sb-sub">${stage.subtitle}</div>
+      <div class="sb-panels">同時 ${stage.panels} 枚</div>
+      ${cleared ? '<div class="sb-badge">✓</div>' : ''}
+      ${!unlocked ? '<div class="sb-lock">🔒</div>' : ''}
+    `;
+    if(unlocked){
+      btn.addEventListener('click', ()=> startStage(stage.id));
+    }
+    grid.appendChild(btn);
+  });
+  // タイトル更新
+  const titleEl = document.getElementById('stage-select-title');
+  if(titleEl) titleEl.textContent = currentChar.name + ' ― 段位を選ぶ';
+  sel.style.display = 'flex';
+  document.getElementById('char-select').style.display = 'none';
+  playBGM('select');
+}
+
+function backToCharSelect(){
+  document.getElementById('stage-select').style.display = 'none';
+  document.getElementById('char-select').style.display = 'flex';
+  document.getElementById('char-select').style.zIndex = '350';
+  playBGM('select');
 }
 
 // ══ AI セリフ生成 ══════════════════════════════════════
@@ -3023,6 +3207,10 @@ function showClearScreen(score){
   playBGM('clear');
   // 信頼度を保存してからキャラ選択の表示に反映
   if(currentCharKey) saveAffection(currentCharKey);
+  // ステージ進捗保存（次のステージを解放）
+  if(currentCharKey){
+    saveStageProgress(currentCharKey, _currentStageId + 1);
+  }
 
   // 難易度別の獲得信頼度内訳
   const c1 = _diffCount[1] || 0;
@@ -3244,8 +3432,8 @@ document.getElementById('btn-quit-pause').addEventListener('click',()=>{
 document.getElementById('btn-restart').addEventListener('click',()=>{
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('game-ui').classList.remove('show');
-  refreshCharCards();
-  document.getElementById('char-select').style.display='flex'; playBGM('select');
+  // クリア後はステージ選択画面に戻る（同じキャラのまま）
+  showStageSelect();
 });
 
 </script>
