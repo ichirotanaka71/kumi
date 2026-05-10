@@ -1210,7 +1210,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.09 23:50</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.10 15:08</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1433,20 +1433,119 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
 
 // ══ ステージメタデータ ══════════════════════════════════════
+const STAGES_DATA = {
+  "a": [
+    {
+      "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓",
+      "timeLimit": 240,
+      "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
+      "opening": [
+        "：お邪魔します",
+        "如月 蒼：おー、あんたかい？　幽霊が見えるって人は",
+        "：はい、どうされましたか？",
+        "如月 蒼：俺はね、目は見えないんだけどさ、なぜだか最近、幽霊だけ見えるようになっちゃってね。",
+        "：はぁ・・",
+        "如月 蒼：でもさ、誰も信じてくれないんだけど笑",
+        "如月 蒼：これがさ、俺の妄想なのか、あんたには見えるのか教えてくんないかな",
+        "如月 蒼：どう？",
+        "：はい、いますね　ウジャウジャ",
+        "如月 蒼：だよねー　ウジャウジャいるんだよね",
+        "如月 蒼：ここ職場だからさ、気が散っちゃうのよ",
+        "：音楽室ですもんね"
+      ],
+      "ending": [
+        "如月 蒼：そうそう。というわけでさ。除霊ってさ、お願いできる？",
+        "如月 蒼：やるじゃん",
+        "：でもまだ湧いてきますね",
+        "如月 蒼：湧いてきちゃうのかー",
+        "：はい、この音楽室か、如月先生にか、引き寄せるものがあるのかもしれません",
+        "如月 蒼：そんなのやだよ"
+      ],
+      "lines": {
+        "start": "とっととやっちゃってください！",
+        "correct": "ナイスゥー！",
+        "wrong": "うわっ！",
+        "gameover": "ちょっとアンタ本気出してよ",
+        "clear": "先生、最高！"
+      }
+    },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "b": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "c": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "d": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "e": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "f": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ],
+  "g": [
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+  ]
+};
+
 let stagesData = {};
 let _currentStageData = null;
 let _stageSanzetsuCount = 0;
 let _stageNizetsuCount = 0;
 
 async function loadStagesData(){
-  if(Object.keys(stagesData).length > 0) return;
-  try {
-    const res = await fetch('./stages.json');
-    stagesData = await res.json();
-  } catch(e){
-    console.warn('stages.json の読み込みに失敗:', e);
-    stagesData = {};
-  }
+  stagesData = STAGES_DATA;
 }
 
 function getStageData(charKey, stageId){
@@ -1686,10 +1785,19 @@ function startOpeningDialog(callback){
   el.addEventListener('click', onOpeningTap);
 }
 
+function _parseDialogLine(raw){
+  const sep = raw.indexOf('：');
+  if(sep === -1) return { speaker: currentChar?.name || '', text: raw };
+  const speaker = raw.slice(0, sep).trim();
+  const text = raw.slice(sep + 1);
+  return { speaker: speaker || '', text };
+}
+
 function showOpeningLine(){
   if(_openingIv){ clearInterval(_openingIv); _openingIv = null; }
   _openingTyping = true;
-  const text = _openingLines[_openingIdx] || '';
+  const { speaker, text } = _parseDialogLine(_openingLines[_openingIdx] || '');
+  document.getElementById('intro-char-name').textContent = speaker;
   const el = document.getElementById('intro-msg-text');
   el.textContent = '';
   let i = 0;
@@ -1711,7 +1819,8 @@ function showOpeningLine(){
 function onOpeningTap(){
   if(_openingTyping){
     if(_openingIv){ clearInterval(_openingIv); _openingIv = null; }
-    document.getElementById('intro-msg-text').textContent = _openingLines[_openingIdx] || '';
+    const { text } = _parseDialogLine(_openingLines[_openingIdx] || '');
+    document.getElementById('intro-msg-text').textContent = text;
     _openingTyping = false;
     return;
   }
@@ -3079,7 +3188,8 @@ function startEndingDialog(callback){
 function showEndingLine(){
   if(_endingIv){ clearInterval(_endingIv); _endingIv = null; }
   _endingTyping = true;
-  const text = _endingLines[_endingIdx] || '';
+  const { speaker, text } = _parseDialogLine(_endingLines[_endingIdx] || '');
+  document.getElementById('ep-msg-name').textContent = speaker;
   const el = document.getElementById('ep-msg-text');
   el.textContent = '';
   let i = 0;
@@ -3102,7 +3212,8 @@ function showEndingLine(){
 function onEndingTap(){
   if(_endingTyping){
     if(_endingIv){ clearInterval(_endingIv); _endingIv = null; }
-    document.getElementById('ep-msg-text').textContent = _endingLines[_endingIdx] || '';
+    const { text } = _parseDialogLine(_endingLines[_endingIdx] || '');
+    document.getElementById('ep-msg-text').textContent = text;
     _endingTyping = false;
     return;
   }
