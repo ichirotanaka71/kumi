@@ -1251,8 +1251,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
     <div id="debug-content" style="display:none;margin-top:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;display:none;flex-direction:column;gap:6px;width:260px;">
       <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-bottom:4px;">― DEBUG ―</div>
       <button class="dbg-btn" onclick="debugResetAll()">全データリセット</button>
-      <button class="dbg-btn" onclick="debugResetAffection()">信頼度リセット（全員→0）</button>
-      <button class="dbg-btn" onclick="debugResetChapters()">章の進行リセット（全員）</button>
+      <button class="dbg-btn" onclick="debugResetStages()">ステージ進捗リセット（全員）</button>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px;justify-content:center;">
         <span style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;">パネル数</span>
         <button class="dbg-btn" style="padding:4px 12px;width:auto;" onclick="debugSetGrid(_gridSize-1)">－</button>
@@ -1290,7 +1289,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
         <span id="timer">20</span>
       </div>
       <span id="score" style="display:none">0</span>
-      <div class="hud-pill" id="hud-lives">🔥🔥🔥🔥🔥</div>
+      <div class="hud-pill" id="hud-stage-label" style="font-family:'Shippori Mincho',serif;letter-spacing:2px;"></div>
       <button id="btn-hint" onclick="tapHint()" title="ヒント(-10秒)">🔍</button>
       <button id="btn-mute">🔔</button>
       <button id="btn-pause">⏸</button>
@@ -1298,10 +1297,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
 
     <div id="char-overlay" style="position:absolute;top:48px;left:14px;z-index:20;">
       <div id="char-overlay-name" style="font-family:'Shippori Mincho',serif;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.7);margin-bottom:4px;pointer-events:none;"></div>
-      <div style="display:flex;align-items:center;gap:5px;cursor:pointer;" onclick="changeAffection(+2)">
-        <span style="font-size:13px;color:var(--affection-color);">♡</span>
-        <span id="char-overlay-aff" style="font-family:'Shippori Mincho',serif;font-size:14px;font-weight:700;color:rgba(255,255,255,0.9);">0</span>
-      </div>
+      <div id="stage-cond-display" style="font-family:'Shippori Mincho',serif;font-size:10px;color:rgba(180,150,255,0.7);letter-spacing:1px;pointer-events:none;"></div>
     </div>
     <div id="char-img">
       <div class="char-bust" id="char-bust">🧑‍🦯</div>
@@ -1352,14 +1348,14 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
 <div id="damage-overlay"></div>
 <div id="damage-number">MISS</div>
 
-<!-- ══ ゲームオーバー画面 ══ -->
+<!-- ══ ゲームオーバー画面（ステージ失敗） ══ -->
 <div id="gameover">
   <div class="go-char" id="go-char">🧑‍🦯</div>
   <div class="go-title">縁切れ</div>
   <div class="go-msg" id="go-msg">…</div>
-  <div class="go-lives-info" id="go-lives"></div>
-  <button id="btn-retry" onclick="retryGame()">再挑戦する<span id="go-retry-cost" style="font-size:10px;opacity:0.6;display:block;letter-spacing:2px;">（ライフ1消費）</span></button>
-  <button id="btn-go-quit" onclick="quitToCharSelect()" style="background:transparent;color:rgba(255,255,255,0.3);border:none;font-size:12px;letter-spacing:3px;font-family:'Shippori Mincho',serif;cursor:pointer;padding:8px 0;margin-top:4px;">依頼人に戻る</button>
+  <div id="go-fail-reason" style="font-size:11px;color:rgba(255,100,100,0.6);letter-spacing:2px;margin-top:4px;font-family:'Shippori Mincho',serif;"></div>
+  <button id="btn-retry" onclick="retryGame()">再挑戦する</button>
+  <button id="btn-go-quit" onclick="quitToStageSelect()" style="background:transparent;color:rgba(255,255,255,0.3);border:none;font-size:12px;letter-spacing:3px;font-family:'Shippori Mincho',serif;cursor:pointer;padding:8px 0;margin-top:4px;">段位選択に戻る</button>
 </div>
 
 <!-- ══ 導入ストーリー ══ -->
@@ -1405,23 +1401,68 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   <div class="ov-char" id="ov-char">🧑‍🦯</div>
   <div class="ov-title">除霊完了</div>
   <div class="ov-msg" id="ov-msg">…</div>
-  <div class="ov-trust-block" id="ov-trust-block">
-    <div class="ov-trust-title">今回のプレイで獲得した信頼度</div>
+  <div class="ov-trust-block">
+    <div class="ov-trust-title">クリア記録</div>
     <table class="ov-trust-table">
-      <tr><td class="otl-name">一絶</td><td class="otl-pt">1点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-1">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-1">0</td></tr>
-      <tr><td class="otl-name">二絶</td><td class="otl-pt">2点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-2">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-2">0</td></tr>
-      <tr><td class="otl-name">三絶</td><td class="otl-pt">5点</td><td class="otl-x">×</td><td class="otl-cnt" id="ov-cnt-3">0</td><td class="otl-eq">＝</td><td class="otl-sub" id="ov-sub-3">0</td></tr>
+      <tr>
+        <td class="otl-name">一絶</td>
+        <td class="otl-cnt" id="ov-cnt-1">0</td>
+        <td class="otl-sub" style="color:rgba(255,255,255,0.3);font-size:10px;">回</td>
+        <td style="width:80px;"></td>
+      </tr>
+      <tr>
+        <td class="otl-name">二絶</td>
+        <td class="otl-cnt" id="ov-cnt-2">0</td>
+        <td class="otl-sub" style="color:rgba(255,255,255,0.3);font-size:10px;">回</td>
+        <td class="otl-sub" id="ov-cond-nizetsu" style="font-size:10px;letter-spacing:1px;"></td>
+      </tr>
+      <tr>
+        <td class="otl-name">三絶</td>
+        <td class="otl-cnt" id="ov-cnt-3">0</td>
+        <td class="otl-sub" style="color:rgba(255,255,255,0.3);font-size:10px;">回</td>
+        <td class="otl-sub" id="ov-cond-sanzetsu" style="font-size:10px;letter-spacing:1px;"></td>
+      </tr>
     </table>
-    <div class="ov-trust-total"><span class="ottl">総合</span><span class="otv" id="ov-trust-gain">0</span></div>
     <div class="ov-trust-divider"></div>
-    <div class="ov-trust-cum"><span class="otcl">累計信頼度</span><span class="otcv" id="ov-trust-cum">0</span></div>
-    <div class="ov-trust-next" id="ov-trust-next-row"><span class="ontl">次のエピソード開放まであと</span><span class="ontv" id="ov-trust-next">0</span></div>
+    <div class="ov-trust-total"><span class="ottl">スコア</span><span class="otv" id="ov-score-disp">0</span></div>
   </div>
   <button id="btn-restart">戻 る</button>
 </div>
 
 <script>
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
+
+// ══ ステージメタデータ ══════════════════════════════════════
+let stagesData = {};
+let _currentStageData = null;
+let _stageSanzetsuCount = 0;
+let _stageNizetsuCount = 0;
+
+async function loadStagesData(){
+  if(Object.keys(stagesData).length > 0) return;
+  try {
+    const res = await fetch('./stages.json');
+    stagesData = await res.json();
+  } catch(e){
+    console.warn('stages.json の読み込みに失敗:', e);
+    stagesData = {};
+  }
+}
+
+function getStageData(charKey, stageId){
+  const stages = stagesData[charKey] || [];
+  return stages.find(s => s.id === stageId) || null;
+}
+
+// ── ゲーム中キャラ発話のデフォルトセリフ（stages.json の lines が null の場合に使用）
+const DEFAULT_LINES = {
+  start:    { a:'…頼む。早く終わらせてくれ。', b:'いくで！頑張ろな！', c:'よろしくお願いします。', d:'…始めるか。', e:'準備はいいか。', f:'さあ、見せてもらおう。', g:'ま、やってみようか。' },
+  correct:  { a:'…一つ、減った。', b:'ええやん！その調子！', c:'素晴らしい。', d:'…正解だ。', e:'よし、その調子だ。', f:'なかなかやるな。', g:'おっ、やるじゃん。' },
+  wrong:    { a:'…まだか。', b:'あかん…もう一回！', c:'もう一度落ち着いて。', d:'…違う。', e:'気を取り直せ。', f:'まだまだだな。', g:'ドンマイドンマイ。' },
+  timeout:  { a:'…来るな。早く。', b:'はよせんか！', c:'急いでください。', d:'…遅い。', e:'急げ！', f:'もたもたするな。', g:'そろそろやばいよ？' },
+  clear:    { a:'…終わったか。ありがとう。', b:'やったな！最高やで！', c:'ありがとうございました。', d:'…助かった。', e:'お疲れ様だ。', f:'さすがだな。', g:'やるじゃんやるじゃん！' },
+  gameover: { a:'…またいつか。', b:'また頼むで。', c:'お気をつけて。', d:'…縁があればまた。', e:'また来てくれ。', f:'次こそ頼む。', g:'またね～。' },
+};
 
 // ══ VOICEVOX音声再生 ══════════════════════════════════════
 // ファイル命名規則: ./voice/{charKey}_{trigger}_{index}.mp3
@@ -1558,33 +1599,22 @@ function debugSetGrid(n){
 function debugResetAll(){
   try {
     Object.keys(CHARS).forEach(k=>{
-      localStorage.removeItem('kumi_aff_'+k);
-      localStorage.removeItem('kumi_chapters_'+k);
+      localStorage.removeItem('kumi_stage_'+k);
     });
     localStorage.removeItem('kumi_launched');
     document.getElementById('debug-status').textContent = '✓ 全データをリセットしました';
-    refreshCharCards();
+    buildCharCards();
     setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
   } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
 }
 
-function debugResetAffection(){
+function debugResetStages(){
   try {
     Object.keys(CHARS).forEach(k=>{
-      localStorage.setItem('kumi_aff_'+k, 0);
+      localStorage.removeItem('kumi_stage_'+k);
     });
-    document.getElementById('debug-status').textContent = '✓ 信頼度を0にリセットしました';
-    refreshCharCards();
-    setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
-  } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
-}
-
-function debugResetChapters(){
-  try {
-    Object.keys(CHARS).forEach(k=>{
-      localStorage.removeItem('kumi_chapters_'+k);
-    });
-    document.getElementById('debug-status').textContent = '✓ 章の進行をリセットしました';
+    document.getElementById('debug-status').textContent = '✓ ステージ進捗をリセットしました';
+    buildCharCards();
     setTimeout(()=>{ document.getElementById('debug-status').textContent=''; },2000);
   } catch(e){ document.getElementById('debug-status').textContent = 'エラー: '+e.message; }
 }
@@ -1634,103 +1664,64 @@ document.getElementById('title-screen').addEventListener('click',()=>{
   document.getElementById('char-select').style.zIndex='350';
 });
 
-// ══ 導入ストーリー ══════════════════════════════════════
-let introLines=[], introIdx=0;
+// ══ Opening ダイアログ（パズル前）══════════════════════════
+let _openingLines = [], _openingIdx = 0;
+let _openingTyping = false, _openingIv = null;
+let _openingCallback = null;
 
-// 好感度別フォールバックセリフ
-const INTRO_FALLBACK = {
-  // 初対面（好感度20以下）
-  first: {
-    a:['…あんたが、お祓い師か。','目は見えない。だが最近、見えないはずのものが見える。','霊、というものらしい。俺には関係ない話のはずだった。','もう疲れた。早く、元の暗闇に戻りたい。','頼む。祓ってくれ。'],
-    b:['あの、突然すみません！','お祓い師さんやって聞いて、来てしもたんですけど…','ここ最近ずっと変なことが起きてて、もうどうしたらええか。','夜中に物音がしたり、金縛りになったりで。','お願いします！助けてください！'],
-    c:['失礼します。お祓い師の方でしょうか。','少し、相談があるのですが。','最近…不思議なことが続いていまして。','どうか、力をお貸しください。','よろしくお願いいたします。'],
-    d:['…来たか。','また怪異が騒がしくなってきた。','お前に頼むほかない。','感情的な話は抜きだ。','祓ってくれ。'],
-    e:['来てくれたか！','実は深刻な状況でな。','屋敷に何かいる気がしてならない。','頼れるのはお前だけだ。','よろしく頼む。'],
-    f:['やあ、待っていたよ。','また怪異に悩まされている。','君のような使い手が必要だ。','詳細は後で話そう。','早速頼めるか。'],
-    g:['お〜、来た来た！','また変なの出てきちゃってさ。','笑えない感じなんだよね。','ちょっと助けてほしいんだけど。','よろしくね〜。'],
-  },
-  // 再会（好感度21以上）
-  again: {
-    a:['…また来たか。','まだいる。あいつが。','早く終わらせたい気持ちは…変わらない、はずだ。','頼む。','…始めよう。'],
-    b:['また頼むで！','やっぱりお前しかおらんな。','今回もよろしく！','一緒やったら怖くないわ。','さあ、いこか！'],
-    c:['また来てくださったのですね。','引き続きお力をお借りできますか。','あなたがいると心強い。','よろしくお願いします。','始めましょう。'],
-    d:['また来たか。','悪いな、何度も。','…頼りにしている。','余計なことは言わない。','始めよう。'],
-    e:['来てくれたか、助かる。','まだ完全には収まっていないんだ。','また一緒に当たってほしい。','信頼している。','よし、行こう。'],
-    f:['また頼めるかい。','君がいると安心する。','今回もよろしく。','早速始めよう。','期待しているよ。'],
-    g:['また来てくれた〜！','もう仲間やん笑','今回もよろしく！','一人じゃ無理やった。','さあさあ、やろ！'],
-  }
-};
-
-function startIntroStory(){
-  // 初回ストーリー → OP BGM、再会 → puzzle BGM（どちらも startGame で puzzle に切替わる）
-  if(affection === 0){ playBGM('op'); }
-  const isFirst = affection === 0;
-
-  // 2回目以降は導入ストーリーをスキップしてそのままゲーム開始
-  if(!isFirst){
-    const key = currentCharKey || 'a';
-    const lines = INTRO_FALLBACK.again[key] || INTRO_FALLBACK.again.a;
-    // 短い再会セリフを1行だけメッセージウィンドウに出してゲーム開始
-    startGame();
-    speakAI('start', null);
+function startOpeningDialog(callback){
+  const lines = (_currentStageData && _currentStageData.opening) || null;
+  if(!lines || lines.length === 0){
+    callback();
     return;
   }
-
-  // 初回のみイントロストーリー表示
-  const el=document.getElementById('intro-story');
+  _openingCallback = callback;
+  _openingLines = lines;
+  _openingIdx = 0;
+  const el = document.getElementById('intro-story');
   el.classList.add('show');
   setCharImage(document.getElementById('intro-char-emoji'), currentChar);
-  document.getElementById('intro-char-name').textContent=currentChar.name;
-  // 固定セリフを使用（VOICEVOX対応）
-  {
-    const key = currentCharKey || 'a';
-    introLines = INTRO_FALLBACK.first[key] || INTRO_FALLBACK.first.a;
-  }
-  introIdx=0;
-  showIntroLine();
-  el.addEventListener('click',onIntroTap);
+  document.getElementById('intro-char-name').textContent = currentChar.name;
+  showOpeningLine();
+  el.addEventListener('click', onOpeningTap);
 }
 
-let _introTyping = false;
-let _introIv = null;
-
-function showIntroLine(){
-  // 前のタイプライターを必ずキャンセル
-  if(_introIv){ clearInterval(_introIv); _introIv=null; }
-  _introTyping = true;
-  const text=introLines[introIdx]||'';
-  const el=document.getElementById('intro-msg-text');
-  el.textContent='';
-  let i=0;
-  _introIv=setInterval(()=>{
-    if(i>=text.length){
-      clearInterval(_introIv); _introIv=null;
-      playVoice(currentCharKey||'a', 'intro_'+introIdx, 0);
-      _introTyping = false;
+function showOpeningLine(){
+  if(_openingIv){ clearInterval(_openingIv); _openingIv = null; }
+  _openingTyping = true;
+  const text = _openingLines[_openingIdx] || '';
+  const el = document.getElementById('intro-msg-text');
+  el.textContent = '';
+  let i = 0;
+  _openingIv = setInterval(()=>{
+    if(i >= text.length){
+      clearInterval(_openingIv); _openingIv = null;
+      playVoice(currentCharKey||'a', 'opening_'+_openingIdx, 0);
+      _openingTyping = false;
       return;
     }
-    el.textContent=text.slice(0,++i);
-  },40);
-  for(let d=0;d<5;d++) document.getElementById('intro-dot-'+d).classList.toggle('on',d===introIdx);
+    el.textContent = text.slice(0, ++i);
+  }, 40);
+  for(let d=0; d<5; d++){
+    const dot = document.getElementById('intro-dot-'+d);
+    if(dot) dot.classList.toggle('on', d === _openingIdx);
+  }
 }
 
-function onIntroTap(){
-  if(_introTyping){
-    // タイプ中なら即全文表示
-    if(_introIv){ clearInterval(_introIv); _introIv=null; }
-    const text=introLines[introIdx]||'';
-    document.getElementById('intro-msg-text').textContent=text;
-    _introTyping=false;
+function onOpeningTap(){
+  if(_openingTyping){
+    if(_openingIv){ clearInterval(_openingIv); _openingIv = null; }
+    document.getElementById('intro-msg-text').textContent = _openingLines[_openingIdx] || '';
+    _openingTyping = false;
     return;
   }
-  introIdx++;
-  if(introIdx>=introLines.length){
-    document.getElementById('intro-story').removeEventListener('click',onIntroTap);
+  _openingIdx++;
+  if(_openingIdx >= _openingLines.length){
+    document.getElementById('intro-story').removeEventListener('click', onOpeningTap);
     document.getElementById('intro-story').classList.remove('show');
-    startGame();
-    speakAI('start',null);
+    if(_openingCallback){ _openingCallback(); _openingCallback = null; }
   } else {
-    showIntroLine();
+    showOpeningLine();
   }
 }
 
@@ -1807,144 +1798,12 @@ const CHARS = {
 const CHAR_KEYS = Object.keys(CHARS);
 
 let currentChar = null;
-let affection = 0; // 0~100
 let cdInterval = null;
 let cdRemain = 20;
-let msgQueue = [];
-let isSpeaking = false;
-
-// ══ ライフシステム ══════════════════════════════════════
-const MAX_LIVES = 5;
-const LIFE_REGEN_MS = 60 * 60 * 1000; // 1時間
-let lives = MAX_LIVES;
 let hintRevealed = 0; // 0=なし, 1=1枚光, 2=2枚光, 3=3枚光
-
-// ══ 章システム ══════════════════════════════════════════
-// 好感度帯 → 章インデックス（0=Op,1〜6=第1〜6章,7=Ed）
-// 各章の解放好感度閾値（初期値20から開始、各章15ポイント差）
-// 第1章:20, 第2章:30, 第3章:42, 第4章:54, 第5章:66, 第6章:78, Ed:90
-// 1クリアの好感度上昇は最大+約12（9組正解）なので最低8回程度かかる
-// 各章15pt差、1クリア最大+18なので最低2クリア/章
-const CHAPTER_THRESHOLDS = [0, 10, 28, 46, 64, 82, 100, 118];
-// Op(0)は導入ストーリーで使用済み。クリア後は章1〜7(Ed)を管理
-// viewedChapters[charKey] = [視聴済み章インデックスの配列]
-
-function loadViewedChapters(charKey){
-  try {
-    const s = localStorage.getItem('kumi_chapters_'+charKey);
-    return s ? JSON.parse(s) : [];
-  } catch(e){ return []; }
-}
-function saveViewedChapters(charKey, viewed){
-  try {
-    localStorage.setItem('kumi_chapters_'+charKey, JSON.stringify(viewed));
-  } catch(e){}
-}
-
-// 好感度で解放される章インデックス（1〜7）を返す
-function unlockedChapterIdx(aff){
-  const a = aff !== undefined ? aff : affection;
-  for(let i=CHAPTER_THRESHOLDS.length-1; i>=1; i--){
-    if(a >= CHAPTER_THRESHOLDS[i]) return i;
-  }
-  return 0; // 好感度0なら章なし
-}
-
-// クリア後に再生すべき未視聴章リストを返す
-function getChaptersToPlay(charKey){
-  const viewed = loadViewedChapters(charKey);
-  const unlocked = unlockedChapterIdx();
-  const toPlay = [];
-  for(let i=1; i<=unlocked; i++){
-    if(!viewed.includes(i)) toPlay.push(i);
-  }
-  return toPlay;
-}
-
-const CHAPTER_NAMES = ['Op','第一章','第二章','第三章','第四章','第五章','第六章','結章（Ed）'];
-// キャラ別章テーマ
-const CHAPTER_THEMES_BY_CHAR = {
-  a: [
-    '', // Op
-    '初対面。蒼は疲れ果てた様子で「早く終わらせてくれ」と言う。目が見えないのに霊だけが見える、その重荷を初めて口にする。',
-    '霊との距離が縮まり始める。蒼は戸惑いながらも、霊の存在を少しずつ意識するようになる。',
-    '霊が蒼のそばを離れないことに気づく。「なぜ離れない」と問う蒼。霊の想いが少しずつ伝わってくる。',
-    '蒼が「祓わなくていいかもしれない」と初めて迷いを見せる。あなたに黙ったまま、霊と話すようになっていた。',
-    '霊が蒼の「目」になっていることが明らかになる。蒼は「こいつがいれば、暗くない」とぽつりと言う。',
-    '祓いの直前。蒼はまだ迷っている。「本当にこれでいいのか」と自分に問い続けている。',
-    'あなたが霊にとどめを刺そうとした瞬間、蒼が「待て」と言う。静かだが、確かな声で。霊と共に生きることを選んだ。',
-  ],
-  default: [
-    '',
-    '初めての出会い。依頼人と初対面し、怪異の気配を感じ取った。',
-    '怪異の正体が少しずつ見えてくる。依頼人との距離が縮まり始める。',
-    '怪異の影響が強まる。依頼人の過去が明かされる。',
-    '祓いの本番が近づく。二人の絆が試される。',
-    '怪異との決戦前夜。依頼人の真の想いが溢れ出す。',
-    '決戦。全てをかけて怪異に立ち向かう。',
-    '怪異を祓い、全てが終わった。依頼人からの感謝と、別れ。',
-  ]
-};
-
-function getChapterTheme(charKey, chIdx){
-  const themes = CHAPTER_THEMES_BY_CHAR[charKey] || CHAPTER_THEMES_BY_CHAR.default;
-  return themes[chIdx] || themes[themes.length-1];
-}
-
-const CHAPTER_THEMES = CHAPTER_THEMES_BY_CHAR.default; // 後方互換
-
-function loadLives(){
-  lives = MAX_LIVES;
-}
-
-function loadAffection(charKey){
-  try {
-    const v = localStorage.getItem('kumi_aff_'+charKey);
-    return v !== null ? parseInt(v) : 0;
-  } catch(e){ return 20; }
-}
-function saveAffection(charKey){
-  try {
-    localStorage.setItem('kumi_aff_'+charKey, affection);
-  } catch(e){}
-}
-
-function saveLives(){
-  // 時間回復なし・保存不要
-}
-
-function loseLife(){
-  if(lives > 0) lives--;
-  updateLivesUI();
-  if(lives <= 0){
-    setTimeout(triggerGameOver, 500);
-  }
-}
-
-function updateLivesUI(){
-  const el = document.getElementById('hud-lives');
-  if(!el) return;
-  let h = '';
-  for(let i=0;i<MAX_LIVES;i++) h += i < lives ? '🔥' : '🩶';
-  el.textContent = h;
-}
-
-function nextLifeIn(){
-  return '';
-}
 
 
 // ══ ステージシステム ══════════════════════════════════════
-const STAGES = [
-  { id: 1, panels: 16, label: '一の段', subtitle: '十六枚卓' },
-  { id: 2, panels:  4, label: '二の段', subtitle: '四枚卓' },
-  { id: 3, panels: 12, label: '三の段', subtitle: '十二枚卓' },
-  { id: 4, panels:  5, label: '四の段', subtitle: '五枚卓' },
-  { id: 5, panels: 10, label: '五の段', subtitle: '十枚卓' },
-  { id: 6, panels:  6, label: '六の段', subtitle: '六枚卓' },
-  { id: 7, panels:  8, label: '七の段', subtitle: '八枚卓' },
-  { id: 8, panels:  9, label: '八の段', subtitle: '九枚卓' },
-];
 let _currentStageId = 1;
 
 function loadStageProgress(charKey){
@@ -1952,7 +1811,7 @@ function loadStageProgress(charKey){
     const s = localStorage.getItem('kumi_stage_'+charKey);
     if(s){ return parseInt(s, 10) || 1; }
   } catch(e){}
-  return 1; // 未クリア = ステージ1のみ解放
+  return 1;
 }
 function saveStageProgress(charKey, maxClearedStage){
   try {
@@ -1963,28 +1822,22 @@ function saveStageProgress(charKey, maxClearedStage){
   } catch(e){}
 }
 function getMaxUnlockedStage(charKey){
-  // クリアステージ + 1（次ステージ）が解放
-  const cleared = loadStageProgress(charKey) - 1; // 初期1=未クリア、2=1ステージクリア済
+  const cleared = loadStageProgress(charKey) - 1;
   return Math.max(1, cleared + 1);
 }
 
 let currentCharKey = 'a';
 
-function selectChar(id) {
-  // 依頼人を選んだらステージ選択画面へ
+function selectChar(id){
   currentCharKey = id;
   currentChar = CHARS[id];
-  affection = loadAffection(id);
-  showStageSelect();
+  loadStagesData().then(()=>showStageSelect());
 }
 
 function startStage(stageId){
-  // ライフ1消費して挑戦
-  if(lives > 0) lives--;
-  updateLivesUI();
   _currentStageId = stageId;
-  const stage = STAGES.find(s=>s.id===stageId) || STAGES[0];
-  _gridSize = stage.panels;
+  _currentStageData = getStageData(currentCharKey, stageId);
+  _gridSize = (_currentStageData && _currentStageData.panels) || 9;
   document.getElementById('char-select').style.display='none';
   document.getElementById('stage-select').style.display='none';
   document.getElementById('game-ui').classList.add('show');
@@ -1993,8 +1846,6 @@ function startStage(stageId){
     setCharImage(bustEl, currentChar);
     const overlayName = document.getElementById('char-overlay-name');
     if(overlayName) overlayName.textContent = currentChar.name;
-    const overlayAff2 = document.getElementById('char-overlay-aff');
-    if(overlayAff2) overlayAff2.textContent = affection;
   } else {
     bustEl.textContent = currentChar.emoji;
   }
@@ -2002,9 +1853,27 @@ function startStage(stageId){
   setCharImage(document.getElementById('ov-char'), currentChar, 0.3);
   document.querySelector('#char-area').style.setProperty('--char-glow', currentChar.glow);
   document.getElementById('btn-mute').style.borderColor = currentChar.accent + '44';
-  updateAffBar();
+  // HUDにステージラベルを表示
+  const stageLabel = document.getElementById('hud-stage-label');
+  if(stageLabel && _currentStageData) stageLabel.textContent = _currentStageData.label;
+  // クリア条件をキャラオーバーレイに表示
+  _updateCondDisplay();
   startBGM();
-  startIntroStory();
+  // Opening ダイアログがあれば表示してからゲーム開始
+  startOpeningDialog(()=>{
+    startGame();
+    speakAI('start', null);
+  });
+}
+
+function _updateCondDisplay(){
+  const el = document.getElementById('stage-cond-display');
+  if(!el || !_currentStageData) return;
+  const cond = _currentStageData.clearConditions || {sanzetsu:0, nizetsu:0};
+  const parts = [];
+  if(cond.sanzetsu > 0) parts.push(`三絶 ${_stageSanzetsuCount}/${cond.sanzetsu}`);
+  if(cond.nizetsu  > 0) parts.push(`二絶 ${_stageNizetsuCount}/${cond.nizetsu}`);
+  el.textContent = parts.join('　');
 }
 
 function showStageSelect(){
@@ -2012,17 +1881,25 @@ function showStageSelect(){
   if(!sel) return;
   const grid = document.getElementById('stage-grid');
   grid.innerHTML = '';
+  const stages = stagesData[currentCharKey] || [];
   const maxUnlocked = getMaxUnlockedStage(currentCharKey);
-  STAGES.forEach(stage => {
+  stages.forEach(stage => {
     const unlocked = stage.id <= maxUnlocked;
     const cleared  = stage.id < maxUnlocked || (loadStageProgress(currentCharKey) > stage.id);
     const btn = document.createElement('div');
     btn.className = 'stage-btn' + (unlocked ? '' : ' locked') + (cleared ? ' cleared' : '');
+    // クリア条件テキスト
+    const condParts = [];
+    if(stage.clearConditions){
+      if(stage.clearConditions.sanzetsu > 0) condParts.push(`三絶×${stage.clearConditions.sanzetsu}`);
+      if(stage.clearConditions.nizetsu  > 0) condParts.push(`二絶×${stage.clearConditions.nizetsu}`);
+    }
     btn.innerHTML = `
       <div class="sb-num">${stage.id}</div>
       <div class="sb-label">${stage.label}</div>
       <div class="sb-sub">${stage.subtitle}</div>
-      <div class="sb-panels">同時 ${stage.panels} 枚</div>
+      <div class="sb-panels">${stage.panels}枚 / ${stage.timeLimit}秒</div>
+      ${condParts.length ? `<div style="font-size:10px;color:rgba(255,200,100,0.8);margin-top:4px;letter-spacing:1px;">${condParts.join(' ')}</div>` : ''}
       ${cleared ? '<div class="sb-badge">✓</div>' : ''}
       ${!unlocked ? '<div class="sb-lock">🔒</div>' : ''}
     `;
@@ -2046,20 +1923,12 @@ function backToCharSelect(){
   playBGM('select');
 }
 
-// ══ AI セリフ生成 ══════════════════════════════════════
-// パズル中固定セリフ（VOICEVOX対応）
-const PUZZLE_LINES = {
-  start:   { a:'…頼む。早く終わらせてくれ。', b:'いくで！頑張ろな！', c:'よろしくお願いします。', d:'…始めるか。', e:'準備はいいか。', f:'さあ、見せてもらおう。', g:'ま、やってみようか。' },
-  correct: { a:'…一つ、減った。', b:'ええやん！その調子！', c:'素晴らしい。', d:'…正解だ。', e:'よし、その調子だ。', f:'なかなかやるな。', g:'おっ、やるじゃん。' },
-  wrong:   { a:'…まだか。', b:'あかん…もう一回！', c:'もう一度落ち着いて。', d:'…違う。', e:'気を取り直せ。', f:'まだまだだな。', g:'ドンマイドンマイ。' },
-  timeout: { a:'…来るな。早く。', b:'はよせんか！', c:'急いでください。', d:'…遅い。', e:'急げ！', f:'もたもたするな。', g:'そろそろやばいよ？' },
-  clear:   { a:'…終わったか。ありがとう。', b:'やったな！最高やで！', c:'ありがとうございました。', d:'…助かった。', e:'お疲れ様だ。', f:'さすがだな。', g:'やるじゃんやるじゃん！' },
-  gameover:{ a:'…またいつか。', b:'また頼むで。', c:'お気をつけて。', d:'…縁があればまた。', e:'また来てくれ。', f:'次こそ頼む。', g:'またね～。' },
-};
-
+// ══ キャラ発話 ══════════════════════════════════════════
+// ステージ固有セリフ → なければ DEFAULT_LINES にフォールバック
 function speakAI(trigger, extra){
   const key = currentCharKey || 'a';
-  const text = (PUZZLE_LINES[trigger]||{})[key] || '…';
+  const stageLine = _currentStageData && _currentStageData.lines && _currentStageData.lines[trigger];
+  const text = stageLine || (DEFAULT_LINES[trigger]||{})[key] || '…';
   typewriter(text);
   playVoice(key, trigger, 0);
 }
@@ -2728,39 +2597,6 @@ function drawGoBousei(col,cy,cx=40){
   return g;
 }
 
-// ══ 好感度 ══════════════════════════════════════════════
-function updateAffBar(){
-  const ovAff = document.getElementById('char-overlay-aff');
-  if(ovAff) ovAff.textContent = affection;
-}
-function changeAffection(delta){
-  const prev = affection;
-  affection = Math.max(0, Math.min(100, affection + delta));
-  updateAffBar();
-  if(delta > 0) soundAffUp(); else soundAffDown();
-  const ovAff = document.getElementById('char-overlay-aff');
-  if(ovAff){
-    ovAff.style.transition = 'transform .2s';
-    ovAff.style.transform = 'scale(1.4)';
-    setTimeout(()=>{ ovAff.style.transform = 'scale(1)'; }, 200);
-  }
-  if(currentCharKey) saveAffection(currentCharKey);
-}
-
-function getChapterIdx(aff){
-  for(let i=CHAPTER_THRESHOLDS.length-1; i>=0; i--){
-    if(aff >= CHAPTER_THRESHOLDS[i]) return i;
-  }
-  return 0;
-}
-function heartsFromAff(){
-  if(affection>=80) return '♥♥♥♥♥';
-  if(affection>=60) return '♥♥♥♥♡';
-  if(affection>=40) return '♥♥♥♡♡';
-  if(affection>=20) return '♥♥♡♡♡';
-  return '♥♡♡♡♡';
-}
-
 // ══ カウントダウン ══════════════════════════════════════
 let _initTime = 180; // 初期秒数（DEBUGで変更可）
 
@@ -2831,7 +2667,7 @@ function onTimeout(){
   triggerDamageEffect('TIME!!');
   charReact('bad');
   speakAI('timeout', null);
-  setTimeout(triggerGameOver, 800);
+  setTimeout(()=>triggerGameOver('時間切れ'), 800);
 }
 
 // ══ ゲーム状態 ══════════════════════════════════════════
@@ -2842,15 +2678,19 @@ let _gridSize = 9;
 function startGame(){
   playBGM('puzzle');
   _submitting = false;
-  loadLives();
-  updateLivesUI();
+  // ステージメタから制限時間・パネル数を取得
+  _initTime = (_currentStageData && _currentStageData.timeLimit) || 180;
+  _gridSize  = (_currentStageData && _currentStageData.panels)    || 9;
+  // ステージカウンタリセット
+  _stageSanzetsuCount = 0;
+  _stageNizetsuCount  = 0;
+  _updateCondDisplay();
   deck=makeDeck(); sel=[]; score=0;
   _diffCount = {1:0, 2:0, 3:0};
   document.getElementById('score').textContent='0';
   document.getElementById('overlay').classList.remove('show');
   hintRevealed=0;
   dots();
-  // 固定スロット初期化
   board = Array(_gridSize).fill(null);
   _boardSnapshot = Array(_gridSize).fill(undefined);
   _cardAnimStates = Array(_gridSize).fill(null);
@@ -3104,9 +2944,10 @@ function submit(){
     });
     score += pts;
     if(_diffCount[diff] !== undefined) _diffCount[diff]++;
+    if(diff === 2) { _stageNizetsuCount++;  _updateCondDisplay(); }
+    if(diff === 3) { _stageSanzetsuCount++; _updateCondDisplay(); }
     document.getElementById('score').textContent = score;
     addTime(time);
-    changeAffection(pts); // 難易度に応じて信頼度アップ（pts: 1/2/5）
     charReact('good');
     soundZuba();
     setTimeout(soundCorrect, 120);
@@ -3139,256 +2980,139 @@ function submit(){
   }
 }
 
+// デッキが空になったとき（全カード除霊完了）
 function gameOver(){
-  clearInterval(ti);clearInterval(cdInterval);
-  const s=Math.floor((Date.now()-t0)/1000);
+  clearInterval(ti); clearInterval(cdInterval);
+  // クリア条件チェック
+  const cond = (_currentStageData && _currentStageData.clearConditions) || {sanzetsu:0, nizetsu:0};
+  const sanzetsuOk = _stageSanzetsuCount >= (cond.sanzetsu || 0);
+  const nizetsuOk  = _stageNizetsuCount  >= (cond.nizetsu  || 0);
+  if(!sanzetsuOk || !nizetsuOk){
+    const reason = [];
+    if(!sanzetsuOk) reason.push(`三絶 ${_stageSanzetsuCount}/${cond.sanzetsu} 回`);
+    if(!nizetsuOk)  reason.push(`二絶 ${_stageNizetsuCount}/${cond.nizetsu} 回`);
+    triggerGameOver('条件未達成：' + reason.join('、'));
+    return;
+  }
   soundClear();
-  // 先にクリア画面を表示（エピソードはクリア画面の戻るタップ後に再生）
-  _pendingClearSeconds = s;
   showClearScreen(score);
 }
 
-let _pendingClearSeconds = 0;
-
-async function playChaptersSequence(chapters, charKey, score, seconds){
-  const viewed = loadViewedChapters(charKey);
-  for(let ci=0; ci<chapters.length; ci++){
-    const chIdx = chapters[ci];
-    viewed.push(chIdx);
-    saveViewedChapters(charKey, viewed);
-    await playOneChapter(chIdx, score, seconds, ci===chapters.length-1);
-  }
-  // エピソード再生終了 → ステージ選択へ
-  showStageSelect();
-}
-
-async function playOneChapter(chIdx, score, seconds, isLast){
-  playBGM('ep');
-  const epEl = document.getElementById('epilogue');
-  epEl.classList.add('show');
-  setCharImage(document.getElementById('ep-char-img'), currentChar);
-  document.getElementById('ep-msg-name').textContent = `${currentChar.name}　―${CHAPTER_NAMES[chIdx]}―`;
-  soundEpilogue();
-  const charKey = currentCharKey||'a';
-  const fallbackLines = {
-    a: [
-      null, // インデックス0未使用
-      // 第一章：霊がうるさい・最悪・眠れない
-      ['…また一つ消えた。早くしてくれ。こいつらがいると頭がうるさくて仕方ない。','見えるだけじゃない。気配もする。音もする。昨日も一晩中うるさくて、一睡もできなかった。','こいつらが何を言いたいのか知らないが、俺には関係ない。ただ消えてくれればそれでいい。','早く全部祓ってくれ。それだけ頼む。','…続けよう。'],
-      // 第二章：一匹だけ異様に近い・最悪に嫌い
-      ['また来てくれたか。…一匹、どうしても近いやつがいる。右肩の少し上。ずっとそこにいる。','気持ち悪い。正直に言う。こいつが一番嫌いだ。他の霊より何倍も近くて、何倍も気配がする。','今日も耳元で何かしている。息みたいなものが感じられる。吐き気がする。','最悪だ。こいつだけは早く消してくれ。他の誰より先に。','頼む。'],
-      // 第三章：助けてくれた・戸惑い・なぜ助けた
-      ['…来たか。昨日、変なことがあった。','階段を踏み外しそうになったとき、あの嫌いなやつが…止めた。俺の腕を引いた気がした。','転ばずに済んだ。それだけだ。偶然かもしれない。あいつがそんなことをするはずがない。','…でも、なぜ助けた。気持ち悪くて最悪なのに、それだけは分からなかった。','続けよう。余計なことを考えた。'],
-      // 第四章：手を握り返した・景色が見えた
-      ['また来てくれたか。今日…あいつが手を差し出してきた。','白くて、少し透けた手だった。気持ち悪かった。でも、俺は手を伸ばしていた。','握り返した瞬間、見えたんだ。空の青さ。川沿いの桜。雲の白さ。生まれてから一度も知らなかった色が、全部流れ込んできた。','俺は怖くて手を離した。でも…見えたんだ。本当に、見えた。','お前に言うつもりはなかった。ただ…あいつのことが、少しだけ分からなくなった。'],
-      // 第五章：迷い・祓っていいのか
-      ['…お前か。あいつは今日も近くにいる。以前ほど、気持ち悪くない。それが一番気持ち悪い。','あの景色が忘れられない。桜がピンクで、空が青かった。俺には一生分からないはずのことだった。','祓ったら、また何も見えなくなる。暗闇に戻る。それを望んでいたはずなのに。','本当に祓っていいのか。俺には、もう分からない。','…続けよう。今は、それだけだ。'],
-      // 第六章：待て・祓わないでくれ
-      ['待て。今すぐ祓うのをやめてくれ。','あいつが怖がっている。俺には分かる。消えたくないと、ずっと言っている。','最悪に嫌いだった。気持ち悪かった。でも、あいつは俺を助けた。景色を見せてくれた。','お前の仕事を邪魔したいわけじゃない。ただ…もう少しだけ、待ってくれ。','頼む。'],
-      // 結章（Ed）
-      ['…終わらせなくて、良かった。','こいつが俺の目だ。空の色も、桜の花びらも、全部こいつが見せてくれる。それでいい。','最悪に嫌いだったやつが、今は…まあ、悪くない。そう思っている。','お前がいなければ、俺はあいつを祓わせていた。そして一生、色を知らなかった。ありがとう。','…ありがとう。それだけだ。'],
-    ]
-  };
-  const fb = (fallbackLines[charKey]||fallbackLines.a);
-  const fbLine = fb[chIdx] || fb[Math.min(chIdx, fb.length-1)] || fb[fb.length-1];
-
-  // 固定フォールバックセリフを使用（VOICEVOX対応）
-  epLines = fbLine;
-  epLineChIdx = chIdx; // 音声ファイルパス用に章インデックスを保持
-  epIndex = 0;
-  showEpLine();
-
-  return new Promise(resolve=>{
-    const handler = ()=>{
-      epIndex++;
-      if(epIndex >= epLines.length){
-        epEl.removeEventListener('click', handler);
-        epEl.classList.remove('show');
-        resolve();
-      } else {
-        showEpLine();
-      }
-    };
-    epEl.addEventListener('click', handler);
-  });
-}
-
-function showClearScreen(score){
+function showClearScreen(currentScore){
   playBGM('clear');
-  // 信頼度を保存してからキャラ選択の表示に反映
-  if(currentCharKey) saveAffection(currentCharKey);
   // ステージ進捗保存（次のステージを解放）
-  if(currentCharKey){
-    saveStageProgress(currentCharKey, _currentStageId + 1);
-  }
+  if(currentCharKey) saveStageProgress(currentCharKey, _currentStageId + 1);
 
-  // 難易度別の獲得信頼度内訳
   const c1 = _diffCount[1] || 0;
   const c2 = _diffCount[2] || 0;
   const c3 = _diffCount[3] || 0;
-  const sub1 = c1 * 1;
-  const sub2 = c2 * 2;
-  const sub3 = c3 * 5;
-  const totalGain = sub1 + sub2 + sub3;
-
   document.getElementById('ov-cnt-1').textContent = c1;
   document.getElementById('ov-cnt-2').textContent = c2;
   document.getElementById('ov-cnt-3').textContent = c3;
-  document.getElementById('ov-sub-1').textContent = sub1;
-  document.getElementById('ov-sub-2').textContent = sub2;
-  document.getElementById('ov-sub-3').textContent = sub3;
-  document.getElementById('ov-trust-gain').textContent = totalGain;
-  document.getElementById('ov-trust-cum').textContent = affection;
 
-  // 未視聴の章があれば「エピソードが公開されました」、なければ「次のエピソードまであと N」
-  const nextRow = document.getElementById('ov-trust-next-row');
-  const nextLabel = nextRow ? nextRow.querySelector('.ontl') : null;
-  const nextValue = document.getElementById('ov-trust-next');
-  const charKey = currentCharKey||'a';
-  const chaptersToPlay = getChaptersToPlay(charKey);
+  // クリア条件の達成表示
+  const cond = (_currentStageData && _currentStageData.clearConditions) || {sanzetsu:0, nizetsu:0};
+  const condN = document.getElementById('ov-cond-nizetsu');
+  const condS = document.getElementById('ov-cond-sanzetsu');
+  if(condN) condN.textContent = cond.nizetsu  > 0 ? `条件 ${cond.nizetsu}回 ✓`  : '';
+  if(condS) condS.textContent = cond.sanzetsu > 0 ? `条件 ${cond.sanzetsu}回 ✓` : '';
+  if(condN) condN.style.color = '#7bffb0';
+  if(condS) condS.style.color = '#7bffb0';
 
-  if(chaptersToPlay.length > 0){
-    // エピソード公開
-    if(nextLabel) nextLabel.textContent = 'エピソードが公開されました';
-    if(nextValue) nextValue.textContent = '✦';
-    nextRow.classList.remove('hide');
-    nextRow.classList.add('episode-unlocked');
-  } else {
-    // 通常の進捗表示
-    nextRow.classList.remove('episode-unlocked');
-    if(nextLabel) nextLabel.textContent = '次のエピソード開放まであと';
-    let nextThreshold = null;
-    for(let i=1; i<CHAPTER_THRESHOLDS.length; i++){
-      if(affection < CHAPTER_THRESHOLDS[i]){ nextThreshold = CHAPTER_THRESHOLDS[i]; break; }
-    }
-    if(nextThreshold !== null){
-      if(nextValue) nextValue.textContent = (nextThreshold - affection);
-      nextRow.classList.remove('hide');
-    } else {
-      nextRow.classList.add('hide');
-    }
-  }
+  const scoreEl = document.getElementById('ov-score-disp');
+  if(scoreEl) scoreEl.textContent = currentScore;
 
   document.getElementById('overlay').classList.add('show');
-  speakAI('clear', score);
-  const clearKey = currentCharKey||'a';
-  const clearText = (PUZZLE_LINES.clear||{})[clearKey] || '';
-  document.getElementById('ov-msg').textContent = clearText;
+  speakAI('clear', currentScore);
 }
 
-function triggerGameOver(){
+// タイムアウト・条件未達成による失敗
+function triggerGameOver(reason){
   clearInterval(ti); clearInterval(cdInterval);
   soundGameOver();
-  sel=[];
-  affection = Math.max(0, affection - 30);
-  if(currentCharKey) saveAffection(currentCharKey);
+  sel = [];
   document.getElementById('gameover').classList.add('show');
   setCharImage(document.getElementById('go-char'), currentChar);
-  // ライフ残数表示
-  const livesEl = document.getElementById('go-lives');
-  if(livesEl) livesEl.textContent = lives > 0 ? `残りライフ ${'🔥'.repeat(lives)}` : 'ライフ残0';
-  // 再挑戦ボタンのライフ表示
-  const costEl = document.getElementById('go-retry-cost');
-  if(costEl) costEl.textContent = lives > 0 ? '（ライフ1消費）' : '（ライフなし）';
-  const retryBtn = document.getElementById('btn-retry');
-  if(retryBtn) retryBtn.disabled = lives <= 0;
+  const reasonEl = document.getElementById('go-fail-reason');
+  if(reasonEl) reasonEl.textContent = reason || '';
   speakAI('gameover', null);
-  const goKey = currentCharKey||'a';
-  const goText = (PUZZLE_LINES.gameover||{})[goKey] || '';
-  document.getElementById('go-msg').textContent = goText;
 }
+
 function retryGame(){
-  if(lives <= 0) return;
-  lives--;
-  updateLivesUI();
   document.getElementById('gameover').classList.remove('show');
   startGame();
+  speakAI('start', null);
 }
-function quitToCharSelect(){
+
+function quitToStageSelect(){
   document.getElementById('gameover').classList.remove('show');
   document.getElementById('game-ui').classList.remove('show');
-  document.getElementById('char-select').style.display='flex'; playBGM('select');
-  document.getElementById('char-select').style.zIndex='350';
+  clearInterval(ti); clearInterval(cdInterval);
+  _paused = false;
+  showStageSelect();
 }
 
-// エピローグ
-let epLines = [];
-let epIndex = 0;
-let epLineChIdx = 0; // 現在再生中の章インデックス（音声ファイルパス用）
+// ══ Ending ダイアログ（パズル後）══════════════════════════
+let _endingLines = [], _endingIdx = 0;
+let _endingTyping = false, _endingIv = null;
+let _endingCallback = null;
 
-async function startEpilogue(score, seconds){
+function startEndingDialog(callback){
+  const lines = (_currentStageData && _currentStageData.ending) || null;
+  if(!lines || lines.length === 0){
+    callback();
+    return;
+  }
+  _endingCallback = callback;
+  _endingLines = lines;
+  _endingIdx = 0;
+  playBGM('ep');
   const epEl = document.getElementById('epilogue');
   epEl.classList.add('show');
   setCharImage(document.getElementById('ep-char-img'), currentChar);
   document.getElementById('ep-msg-name').textContent = currentChar.name;
   soundEpilogue();
-
-  // AIに5行のエピローグを生成させる
-  const epTextEl = document.getElementById('ep-msg-text');
-  epTextEl.innerHTML = '<span class="msg-loading">…</span>';
-
-  // 固定セリフ（VOICEVOX対応）
-  const epKey = currentCharKey || 'a';
-  const epFallback = {
-    a: ['…ありがとう。本当に助かった。','あなたがいなければ、どうなっていたか。','怪異というものは、こんなにも恐ろしいものなのか。','また何かあったとき…頼んでもいいだろうか。','ありがとうございました。'],
-    b: ['ほんまにありがとう、助かったわ！','あんな怪異、見えるとか…すごすぎやろ。','もう怖い思いせんで済むんやな。','また何かあったら、真っ先にあんたに連絡するわ。','ほんまに、ありがとうございました！'],
-    c: ['ありがとうございました。本当に助かりました。','あなたがいてくれて良かった。','また何かあれば、よろしくお願いします。','お気をつけて。','またいつか。'],
-    d: ['…助かった。','礼を言う。','また来てくれ。','次も頼む。','…またいつか。'],
-    e: ['よくやってくれた。ありがとう。','また何かあれば頼む。','信頼している。','またいつか会おう。','お疲れ様だ。'],
-    f: ['さすがだな。ありがとう。','また頼むよ。','次も期待している。','よくやった。','またいつか。'],
-    g: ['やるじゃん！ありがとね〜。','また何かあったら来るよ。','次もよろしく！','ほんとに助かった。','またね〜！'],
-  };
-  epLines = epFallback[epKey] || epFallback.a;
-  epLineChIdx = 0;
-
-  epIndex = 0;
-  showEpLine();
-  epEl.addEventListener('click', onEpTap);
+  showEndingLine();
+  epEl.addEventListener('click', onEndingTap);
 }
 
-let _epTyping = false;
-let _epCurrentText = '';
-let _epIv = null;
-
-function showEpLine(){
-  // 前のタイプライターを必ずキャンセル
-  if(_epIv){ clearInterval(_epIv); _epIv=null; }
-  _epTyping = true;
-  const text = epLines[epIndex] || '';
-  _epCurrentText = text;
+function showEndingLine(){
+  if(_endingIv){ clearInterval(_endingIv); _endingIv = null; }
+  _endingTyping = true;
+  const text = _endingLines[_endingIdx] || '';
   const el = document.getElementById('ep-msg-text');
   el.textContent = '';
   let i = 0;
-  _epIv = setInterval(()=>{
+  _endingIv = setInterval(()=>{
     if(i >= text.length){
-      clearInterval(_epIv); _epIv=null;
-      playVoice(currentCharKey||'a', 'ch'+(epLineChIdx||0)+'_'+epIndex, 0);
-      _epTyping = false;
+      clearInterval(_endingIv); _endingIv = null;
+      playVoice(currentCharKey||'a', 'ending_'+_endingIdx, 0);
+      _endingTyping = false;
       return;
     }
     el.textContent = text.slice(0, ++i);
   }, 40);
-  for(let d=0;d<5;d++){
-    document.getElementById('ep-dot-'+d).classList.toggle('on', d===epIndex);
+  for(let d=0; d<5; d++){
+    const dot = document.getElementById('ep-dot-'+d);
+    if(dot) dot.classList.toggle('on', d === _endingIdx);
   }
   soundEpilogue();
 }
 
-function onEpTap(){
-  if(_epTyping){
-    if(_epIv){ clearInterval(_epIv); _epIv=null; }
-    document.getElementById('ep-msg-text').textContent = _epCurrentText;
-    _epTyping = false;
+function onEndingTap(){
+  if(_endingTyping){
+    if(_endingIv){ clearInterval(_endingIv); _endingIv = null; }
+    document.getElementById('ep-msg-text').textContent = _endingLines[_endingIdx] || '';
+    _endingTyping = false;
     return;
   }
-  epIndex++;
-  if(epIndex >= epLines.length){
-    // エピローグ終了→ステージ選択へ
-    document.getElementById('epilogue').removeEventListener('click', onEpTap);
+  _endingIdx++;
+  if(_endingIdx >= _endingLines.length){
+    document.getElementById('epilogue').removeEventListener('click', onEndingTap);
     document.getElementById('epilogue').classList.remove('show');
-    showStageSelect();
+    if(_endingCallback){ _endingCallback(); _endingCallback = null; }
   } else {
-    showEpLine();
+    showEndingLine();
   }
 }
 
@@ -3401,8 +3125,7 @@ function buildCharCards(){
   div.className = 'char-cards';
   CHAR_KEYS.forEach(key => {
     const ch = CHARS[key];
-    const aff = loadAffection(key);
-    const hearts = affToHearts(aff);
+    const cleared = Math.max(0, loadStageProgress(key) - 1);
     const card = document.createElement('div');
     card.className = 'char-card';
     card.style.cssText = `border-color: ${ch.accent}33; box-shadow: none;`;
@@ -3411,21 +3134,12 @@ function buildCharCards(){
       <div class="char-info">
         <div class="char-name" style="color:${ch.accent}">${ch.name}</div>
         <div class="char-name-sub">${ch.domain}</div>
-        <div class="char-aff" style="color:${ch.accent}">好感度 ${aff}<span style="font-size:10px;opacity:0.7"> / 100</span></div>
+        <div class="char-aff" style="color:${ch.accent}">段位 ${cleared}<span style="font-size:10px;opacity:0.7"> / 8</span></div>
       </div>`;
     card.addEventListener('click', ()=>selectChar(key));
     div.appendChild(card);
   });
   wrap.appendChild(div);
-}
-
-function affToHearts(aff){
-  const filled = Math.round(aff/20);
-  return '♥'.repeat(filled) + '♡'.repeat(5-filled);
-}
-
-function refreshCharCards(){
-  buildCharCards();
 }
 
 function buildPreview(){
@@ -3447,27 +3161,22 @@ window.addEventListener('DOMContentLoaded',()=>{ buildPreview(); buildCharCards(
 document.getElementById('btn-mute').addEventListener('click',toggleMute);
 document.getElementById('btn-pause').addEventListener('click',showPause);
 document.getElementById('btn-resume').addEventListener('click',hidePause);
+
+// ポーズ中「依頼人に戻る」→ステージ選択へ
 document.getElementById('btn-quit-pause').addEventListener('click',()=>{
   document.getElementById('pause-screen').classList.remove('show');
   document.getElementById('game-ui').classList.remove('show');
   clearInterval(ti); clearInterval(cdInterval);
   _paused = false;
-  refreshCharCards();
-  document.getElementById('char-select').style.display='flex'; playBGM('select');
+  buildCharCards();
+  showStageSelect();
 });
+
+// クリア画面「戻る」→ Ending ダイアログがあれば再生してからステージ選択
 document.getElementById('btn-restart').addEventListener('click',()=>{
   document.getElementById('overlay').classList.remove('show');
-  const charKey = currentCharKey||'a';
-  const chaptersToPlay = getChaptersToPlay(charKey);
-  if(chaptersToPlay.length > 0){
-    // 未視聴のエピソードあり → 再生してからステージ選択
-    document.getElementById('game-ui').classList.remove('show');
-    setTimeout(()=>playChaptersSequence(chaptersToPlay, charKey, score, _pendingClearSeconds||0), 200);
-  } else {
-    // ステージ選択へ
-    document.getElementById('game-ui').classList.remove('show');
-    showStageSelect();
-  }
+  document.getElementById('game-ui').classList.remove('show');
+  startEndingDialog(()=>showStageSelect());
 });
 
 </script>
