@@ -1220,7 +1220,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 14:20</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 16:42</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -2140,7 +2140,7 @@ document.addEventListener('visibilitychange', ()=>{
   }
 });
 
-function soundSelect(n){const f=[659.25,784.00,932.33];marimba(f[n-1],0.16,0,0.7);crystal(f[n-1]*2,0.05,0.03);}
+function soundSelect(n){const f=[523.25,659.25,784.00];marimba(f[n-1],0.16,0,0.7);crystal(f[n-1]*2,0.05,0.03);}
 function soundDeselect(){marimba(329.63,0.1,0,0.3);}
 function tapHint(){
   if(hintRevealed >= 3) return;
