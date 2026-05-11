@@ -1187,6 +1187,50 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
   transition: background .3s;
 }
 .ep-dot.on { background: rgba(180,150,255,0.7); }
+
+/* ══ パスモード ══════════════════════════════════════════════ */
+#path-board-wrap {
+  flex: 1 1 0; min-height: 0; padding: 5px 6px 56px 6px;
+  display: none; position: relative; z-index: 1;
+}
+#path-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 4px; flex: 1; min-height: 0; position: relative;
+}
+#path-svg {
+  position: absolute; inset: 0; pointer-events: none;
+  z-index: 10; width: 100%; height: 100%; overflow: visible;
+}
+.ptile {
+  position: relative; display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer; overflow: visible; border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(180,160,255,0.12);
+  touch-action: none; user-select: none;
+  transition: background 0.1s, border-color 0.1s, transform 0.1s;
+}
+.ptile svg { width: 65%; height: 65%; pointer-events: none; }
+.ptile.pt-sel {
+  background: rgba(160,90,255,0.28);
+  border-color: rgba(200,140,255,0.7);
+  transform: scale(0.91);
+}
+.ptile.pt-ok  { background: rgba(60,210,130,0.28); border-color: rgba(80,240,160,0.7); }
+.ptile.pt-ng  { background: rgba(255,60,60,0.22);  border-color: rgba(255,100,100,0.6); }
+@keyframes ptRemove {
+  0%   { transform: scale(1);   opacity: 1; filter: brightness(1.5); }
+  50%  { transform: scale(1.25); opacity: 0.6; filter: brightness(2.5); }
+  100% { transform: scale(0);   opacity: 0; }
+}
+.ptile.pt-removing { animation: ptRemove 0.36s ease-in forwards; pointer-events: none; }
+@keyframes ptBorn {
+  from { transform: translateY(-16px) scale(0.7); opacity: 0; }
+  to   { transform: translateY(0)     scale(1);   opacity: 1; }
+}
+.ptile.pt-born { animation: ptBorn 0.28s ease-out both; }
 </style>
 </head>
 <body>
@@ -1220,7 +1264,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 11:22</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 12:19</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -2698,6 +2742,9 @@ let _diffCount = {1:0, 2:0, 3:0}; // 一絶/二絶/三絶のカウント
 let _gridSize = 9;
 
 function startGame(){
+  // ── パスモード（実験ブランチ） ──
+  if(EXPERIMENT_PATH_MODE){ startPathGame(); return; }
+
   playBGM('puzzle');
   _submitting = false;
   // ステージメタから制限時間・パネル数を取得
@@ -3062,6 +3109,7 @@ function triggerGameOver(reason){
 
 function retryGame(){
   document.getElementById('gameover').classList.remove('show');
+  if(EXPERIMENT_PATH_MODE){ startPathGame(); speakAI('start',null); return; }
   startGame();
   speakAI('start', null);
 }
@@ -3205,6 +3253,351 @@ document.getElementById('btn-restart').addEventListener('click',()=>{
     showStageSelect();
   });
 });
+
+// ══════════════════════════════════════════════════════════════
+// パスモード（experiment/path-select ブランチ）
+// ══════════════════════════════════════════════════════════════
+const EXPERIMENT_PATH_MODE = true;
+
+const PM_COLS = 5, PM_ROWS = 5;
+const PM_DEFAULT_MOVES  = 20; // デフォルト手順上限
+const PM_DEFAULT_TARGET = 8;  // デフォルトクリア目標（セット数）
+
+let _pm = false;
+let _pmBoard    = [];   // [row][col] = card | null
+let _pmSel      = [];   // [{row,col}]  現在のパス
+let _pmDragging = false;
+let _pmMovesLeft   = 0;
+let _pmRemovedAny  = 0;  // 合計消去セット数
+let _pmTarget      = 0;  // クリア目標セット数
+
+// ─── ユーティリティ ───────────────────────────────────────────
+function _pmKey(c){ return c.color+'|'+c.shape+'|'+c.count; }
+
+function _pmInPlay(){
+  const s = new Set();
+  for(let r=0;r<PM_ROWS;r++)
+    for(let c=0;c<PM_COLS;c++)
+      if(_pmBoard[r] && _pmBoard[r][c]) s.add(_pmKey(_pmBoard[r][c]));
+  return s;
+}
+
+function _pmNextCard(){
+  // 現在盤面にない種類からランダムに補充
+  const inPlay = _pmInPlay();
+  const pool = [];
+  for(const color of COLORS)
+    for(const shape of SHAPES)
+      for(const count of COUNTS){
+        if(!inPlay.has(color+'|'+shape+'|'+count))
+          pool.push({color,shape,count});
+      }
+  if(pool.length === 0){
+    // 25/27以上が埋まっている（通常はほぼ起きない）→ ランダム
+    return { color: COLORS[0|Math.random()*3], shape: SHAPES[0|Math.random()*3], count: COUNTS[0|Math.random()*3] };
+  }
+  return pool[0|Math.random()*pool.length];
+}
+
+// ─── ゲーム開始 ───────────────────────────────────────────────
+function startPathGame(){
+  _pm = true;
+  _pmSel = []; _pmDragging = false;
+  _pmRemovedAny = 0;
+  _stageSanzetsuCount = 0;
+  _stageNizetsuCount  = 0;
+
+  const cond = (_currentStageData && _currentStageData.clearConditions) || {};
+  _pmMovesLeft = (_currentStageData && _currentStageData.timeLimit) || PM_DEFAULT_MOVES;
+  _pmTarget    = (cond.total || 0) || PM_DEFAULT_TARGET;
+
+  _updateCondDisplay();
+
+  // 盤面を埋める（27枚デッキから先着25枚）
+  const d = makeDeck();
+  let di = 0;
+  _pmBoard = [];
+  for(let r=0;r<PM_ROWS;r++){
+    _pmBoard[r]=[];
+    for(let c=0;c<PM_COLS;c++){
+      _pmBoard[r][c] = di < d.length ? d[di++] : _pmNextCard();
+    }
+  }
+
+  _pmBuildDOM();
+  _pmUpdateHUD();
+  playBGM('puzzle');
+}
+
+// ─── DOM 構築 ─────────────────────────────────────────────────
+function _pmBuildDOM(){
+  document.getElementById('board-wrap').style.display = 'none';
+
+  let wrap = document.getElementById('path-board-wrap');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'path-board-wrap';
+    const gameArea = document.getElementById('game-area');
+    gameArea.insertBefore(wrap, document.getElementById('board-wrap'));
+  }
+  wrap.innerHTML = '';
+
+  // SVG パスライン描画レイヤー
+  const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.id = 'path-svg';
+  wrap.appendChild(svgEl);
+
+  // グリッド
+  const grid = document.createElement('div');
+  grid.id = 'path-board';
+  wrap.appendChild(grid);
+
+  for(let r=0;r<PM_ROWS;r++)
+    for(let c=0;c<PM_COLS;c++)
+      grid.appendChild(_pmMakeCell(r,c,_pmBoard[r][c],false));
+
+  wrap.style.display = 'flex';
+
+  _pmAttachEvents(grid);
+}
+
+function _pmMakeCell(r,c,card,born){
+  const cell = document.createElement('div');
+  cell.className = 'ptile' + (born ? ' pt-born' : '');
+  cell.dataset.row = r;
+  cell.dataset.col = c;
+  if(born) setTimeout(()=>cell.classList.remove('pt-born'), 400);
+  if(card){ cell.appendChild(makeShape(card)); }
+  return cell;
+}
+
+function _pmCellAt(r,c){
+  return document.querySelector(`#path-board [data-row="${r}"][data-col="${c}"]`);
+}
+
+function _pmAttachEvents(grid){
+  grid.addEventListener('pointerdown',  _pmOnDown, {passive:false});
+  grid.addEventListener('pointermove',  _pmOnMove, {passive:false});
+  grid.addEventListener('pointerup',    _pmOnUp);
+  grid.addEventListener('pointercancel',_pmOnUp);
+}
+
+// ─── ポインタイベント ─────────────────────────────────────────
+function _pmPosFromEvent(e){
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if(!el) return null;
+  const cell = el.closest('.ptile');
+  if(!cell) return null;
+  const r = parseInt(cell.dataset.row), c = parseInt(cell.dataset.col);
+  if(isNaN(r)||isNaN(c)) return null;
+  return {row:r, col:c, el:cell};
+}
+
+function _pmIsAdj(a,b){
+  return Math.abs(a.row-b.row)<=1 && Math.abs(a.col-b.col)<=1 &&
+         !(a.row===b.row && a.col===b.col);
+}
+
+function _pmInSel(r,c){ return _pmSel.some(s=>s.row===r&&s.col===c); }
+
+function _pmOnDown(e){
+  e.preventDefault();
+  _pmDragging = true;
+  _pmSel = [];
+  _pmClearHighlights();
+  _pmDrawLine();
+  const pos = _pmPosFromEvent(e);
+  if(pos && _pmBoard[pos.row][pos.col]){
+    _pmSel.push({row:pos.row, col:pos.col});
+    pos.el.classList.add('pt-sel');
+    _pmDrawLine();
+  }
+}
+
+function _pmOnMove(e){
+  if(!_pmDragging) return;
+  e.preventDefault();
+  const pos = _pmPosFromEvent(e);
+  if(!pos) return;
+  if(_pmSel.length >= 3) return;
+  if(_pmInSel(pos.row,pos.col)) return;
+  if(!_pmBoard[pos.row][pos.col]) return;
+  if(_pmSel.length > 0 && !_pmIsAdj(_pmSel[_pmSel.length-1], pos)) return;
+  _pmSel.push({row:pos.row, col:pos.col});
+  pos.el.classList.add('pt-sel');
+  _pmDrawLine();
+}
+
+function _pmOnUp(e){
+  if(!_pmDragging) return;
+  _pmDragging = false;
+
+  if(_pmSel.length === 3){
+    const [a,b,c] = _pmSel.map(s=>_pmBoard[s.row][s.col]);
+    if(isSet(a,b,c)){
+      _pmOnValidSet(a,b,c);
+      return;
+    }
+    _pmFlash('ng');
+  } else {
+    _pmClearHighlights();
+    _pmDrawLine();
+  }
+}
+
+// ─── セット成立 ───────────────────────────────────────────────
+async function _pmOnValidSet(a,b,c){
+  const {diff} = getSetDifficulty(a,b,c);
+  _pmRemovedAny++;
+  if(diff >= 3) _stageSanzetsuCount++;
+  if(diff >= 2) _stageNizetsuCount++;
+  _pmMovesLeft--;
+
+  speakAI('correct', null);
+  _updateCondDisplay();
+  _pmUpdateHUD();
+
+  // フラッシュ
+  _pmSel.forEach(s=>{ const el=_pmCellAt(s.row,s.col); if(el){ el.classList.remove('pt-sel'); el.classList.add('pt-ok'); } });
+  _pmDrawLine();
+  await _sleep(200);
+
+  // 消去アニメ
+  const removed = [..._pmSel];
+  removed.forEach(s=>{ const el=_pmCellAt(s.row,s.col); if(el) el.classList.add('pt-removing'); });
+  await _sleep(370);
+
+  // ボードから除去
+  removed.forEach(s=>{ _pmBoard[s.row][s.col] = null; });
+  _pmSel = [];
+  _pmDrawLine();
+
+  // 落下 & 補充
+  await _pmFallAndRefill(removed.map(s=>s.col));
+
+  // クリア判定
+  _pmCheckClear();
+}
+
+function _sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ─── 落下 & 補充 ─────────────────────────────────────────────
+async function _pmFallAndRefill(changedCols){
+  const cols = [...new Set(changedCols)];
+  const grid = document.getElementById('path-board');
+
+  cols.forEach(c=>{
+    // 各列を「下から積む」＝上から下へスキャンしてnullを除去
+    const stack = [];
+    for(let r=0;r<PM_ROWS;r++) if(_pmBoard[r][c]) stack.push(_pmBoard[r][c]);
+    // 上から補充
+    while(stack.length < PM_ROWS) stack.unshift(_pmNextCard());
+    for(let r=0;r<PM_ROWS;r++) _pmBoard[r][c] = stack[r];
+  });
+
+  // DOM全再構築
+  grid.innerHTML = '';
+  for(let r=0;r<PM_ROWS;r++)
+    for(let c=0;c<PM_COLS;c++){
+      const born = cols.includes(c);
+      grid.appendChild(_pmMakeCell(r,c,_pmBoard[r][c],born));
+    }
+
+  _pmAttachEvents(grid);
+  await _sleep(320);
+}
+
+// ─── クリア判定 ───────────────────────────────────────────────
+function _pmCheckClear(){
+  const cond = (_currentStageData && _currentStageData.clearConditions) || {};
+  let cleared = true;
+  if((cond.sanzetsu||0) > 0 && _stageSanzetsuCount < cond.sanzetsu) cleared = false;
+  if((cond.nizetsu ||0) > 0 && _stageNizetsuCount  < cond.nizetsu)  cleared = false;
+  // total か、sanzetsu/nizetsu が両方0 → _pmTarget で判定
+  if((cond.sanzetsu||0)===0 && (cond.nizetsu||0)===0){
+    if(_pmRemovedAny < _pmTarget) cleared = false;
+  }
+
+  if(cleared){
+    _pmCleanup();
+    speakAI('clear', null);
+    setTimeout(()=>showClearScreen(0), 600);
+    return;
+  }
+  if(_pmMovesLeft <= 0){
+    _pmCleanup();
+    speakAI('gameover', null);
+    setTimeout(()=>triggerGameOver('手順数が尽きました'), 600);
+  }
+}
+
+// ─── HUD 更新 ─────────────────────────────────────────────────
+function _pmUpdateHUD(){
+  // タイマー数値 → 手順残数
+  const timerNum = document.getElementById('center-timer-num');
+  if(timerNum) timerNum.textContent = _pmMovesLeft;
+
+  // ラベル
+  const labelEl = document.querySelector('#center-timer-wrap > div > div:first-child');
+  if(labelEl) labelEl.textContent = '残り手数';
+
+  // バーをクリア進捗に（目標セット数ベース）
+  const bar = document.getElementById('center-cd-bar');
+  if(bar){
+    const pct = _pmTarget > 0 ? Math.min(100, (_pmRemovedAny / _pmTarget) * 100) : 0;
+    bar.style.width = pct + '%';
+    bar.style.transition = 'width 0.4s ease';
+    bar.style.background  = 'linear-gradient(90deg,#7bff9f,#5bbfff)';
+  }
+}
+
+// ─── SVGラインを描画 ──────────────────────────────────────────
+function _pmDrawLine(){
+  const svg = document.getElementById('path-svg');
+  if(!svg) return;
+  svg.innerHTML = '';
+  if(_pmSel.length < 2) return;
+
+  const wrap = document.getElementById('path-board-wrap');
+  if(!wrap) return;
+  const wRect = wrap.getBoundingClientRect();
+
+  for(let i=0;i<_pmSel.length-1;i++){
+    const elA = _pmCellAt(_pmSel[i].row,   _pmSel[i].col);
+    const elB = _pmCellAt(_pmSel[i+1].row, _pmSel[i+1].col);
+    if(!elA||!elB) continue;
+    const rA=elA.getBoundingClientRect(), rB=elB.getBoundingClientRect();
+    const x1=rA.left+rA.width/2-wRect.left,  y1=rA.top+rA.height/2-wRect.top;
+    const x2=rB.left+rB.width/2-wRect.left,  y2=rB.top+rB.height/2-wRect.top;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.style.cssText='stroke:rgba(200,140,255,0.85);stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(210,150,255,0.9));';
+    svg.appendChild(line);
+  }
+}
+
+// ─── ハイライトクリア ────────────────────────────────────────
+function _pmClearHighlights(){
+  document.querySelectorAll('#path-board .ptile').forEach(el=>{
+    el.classList.remove('pt-sel','pt-ok','pt-ng');
+  });
+  _pmSel = [];
+}
+
+function _pmFlash(type){
+  _pmSel.forEach(s=>{ const el=_pmCellAt(s.row,s.col); if(el){ el.classList.remove('pt-sel'); el.classList.add('pt-'+type); } });
+  _pmDrawLine();
+  setTimeout(()=>{ _pmClearHighlights(); _pmDrawLine(); }, 380);
+}
+
+// ─── 終了処理 ────────────────────────────────────────────────
+function _pmCleanup(){
+  _pm = false;
+  const wrap = document.getElementById('path-board-wrap');
+  if(wrap) wrap.style.display = 'none';
+  document.getElementById('board-wrap').style.display = '';
+}
 
 </script>
 </body>
