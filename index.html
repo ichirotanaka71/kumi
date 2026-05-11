@@ -1220,7 +1220,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
       <div class="title-kanji">組</div>
       <div class="title-roma">K U M I</div>
       <div class="title-sub-bottom">〜怪異祓いの法則〜</div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 11:22</div>
+      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Serif JP',serif;">v2026.05.11 14:20</div>
     </div>
     <div class="title-tap-hint">タップして始める</div>
   </div>
@@ -1316,7 +1316,7 @@ body.sanzetsu-shake { animation: sanzetsuShake 0.6s ease-out; }
     <!-- 中央タイマー -->
     <div id="center-timer-wrap" style="position:absolute;bottom:56px;left:16px;right:16px;z-index:10;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="font-family:'Shippori Mincho',serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);">残り時間</div>
+        <div style="font-family:'Shippori Mincho',serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);">残り手数</div>
         <div id="center-timer-num" style="font-family:'Shippori Mincho',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);">30</div>
       </div>
       <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
@@ -1818,8 +1818,7 @@ const CHARS = {
 const CHAR_KEYS = Object.keys(CHARS);
 
 let currentChar = null;
-let cdInterval = null;
-let cdRemain = 20;
+let cdInterval = null; // 使用しないが互換のため残す
 let hintRevealed = 0; // 0=なし, 1=1枚光, 2=2枚光, 3=3枚光
 
 
@@ -1922,7 +1921,7 @@ function showStageSelect(){
       <div class="sb-num">${stage.id}</div>
       <div class="sb-label">${stage.label}</div>
       <div class="sb-sub">${stage.subtitle}</div>
-      <div class="sb-panels">${stage.panels}枚 / ${stage.timeLimit}秒</div>
+      <div class="sb-panels">${stage.panels}枚 / ${stage.timeLimit}手</div>
       ${condParts.length ? `<div style="font-size:10px;color:rgba(255,200,100,0.8);margin-top:4px;letter-spacing:1px;">${condParts.join(' ')}</div>` : ''}
       ${cleared ? '<div class="sb-badge">✓</div>' : ''}
       ${isNew ? '<div class="sb-new">NEW</div>' : ''}
@@ -2152,7 +2151,7 @@ function tapHint(){
   const activeCards = activeIdx.map(i => board[i]);
   const sets = findSets(activeCards);
   if(!sets.length) return;
-  addTime(-10);
+  _addMoves(-2); // ヒント使用で2手消費
   hintRevealed++;
   showHint();
   const btn = document.getElementById('btn-hint');
@@ -2619,17 +2618,21 @@ function drawGoBousei(col,cy,cx=40){
   return g;
 }
 
-// ══ カウントダウン ══════════════════════════════════════
-let _initTime = 180; // 初期秒数（DEBUGで変更可）
+// ══ 手順制 ══════════════════════════════════════════════
+let _initMoves = 15; // 初期手順数（DEBUGで変更可）
+let _movesLeft  = 15;
 
-function _updateCenterTimer(){
+function _updateMovesHUD(){
   const num = document.getElementById('center-timer-num');
   const bar = document.getElementById('center-cd-bar');
-  if(num) num.textContent = Math.max(0, Math.ceil(cdRemain));
+  const lbl = document.querySelector('#center-timer-wrap > div > div:first-child');
+  if(lbl) lbl.textContent = '残り手数';
+  if(num) num.textContent = Math.max(0, _movesLeft);
   if(bar){
-    const pct = Math.max(0, Math.min(100, cdRemain / _initTime * 100));
+    const pct = Math.max(0, Math.min(100, _movesLeft / _initMoves * 100));
     bar.style.width = pct + '%';
-    if(cdRemain <= 7){
+    bar.style.transition = 'width 0.3s ease';
+    if(_movesLeft <= 3){
       bar.style.background = 'linear-gradient(90deg,#ff6b6b,#ff3b5c)';
       if(num) num.style.color = '#ff6b6b';
     } else {
@@ -2638,59 +2641,31 @@ function _updateCenterTimer(){
     }
   }
 }
-function addTime(sec){
-  cdRemain = Math.min(cdRemain + sec, _initTime);
-  _updateCenterTimer();
-  // +秒数フラッシュ
+
+function _addMoves(delta){
+  _movesLeft = Math.max(0, _movesLeft + delta);
+  _updateMovesHUD();
+  // 増減フラッシュ
   const num = document.getElementById('center-timer-num');
-  if(num){
+  if(num && delta !== 0){
     const flash = document.createElement('span');
-    flash.textContent = (sec >= 0 ? '+' : '') + sec;
-    flash.style.cssText = `position:absolute;right:-28px;top:-2px;font-size:11px;font-weight:700;color:${sec>=0?'#7bffb0':'#ff6b6b'};animation:deltaPopUp .9s ease forwards;pointer-events:none;font-family:'Shippori Mincho',serif;`;
+    flash.textContent = (delta > 0 ? '+' : '') + delta;
+    flash.style.cssText = `position:absolute;right:-28px;top:-2px;font-size:11px;font-weight:700;color:${delta>0?'#7bffb0':'#ff6b6b'};animation:deltaPopUp .9s ease forwards;pointer-events:none;font-family:'Shippori Mincho',serif;`;
     num.style.position = 'relative';
     num.appendChild(flash);
     setTimeout(()=>flash.remove(), 900);
   }
 }
-function startCountdown(){
-  clearInterval(cdInterval);
-  cdRemain = _initTime;
-  document.getElementById('timer').textContent = _initTime;
-  _updateCenterTimer();
-  cdInterval = setInterval(()=>{
-    cdRemain--;
-    document.getElementById('timer').textContent = Math.max(0, Math.ceil(cdRemain));
-    _updateCenterTimer();
-    if(cdRemain <= 10 && !muted){
-      soundChikutaku();
-      if(cdRemain <= 5){ setTimeout(soundChikutaku, 500); }
-      if(cdRemain <= 3){ setTimeout(soundChikutaku, 250); setTimeout(soundChikutaku, 750); }
-    }
-    if(cdRemain <= 0){ clearInterval(cdInterval); onTimeout(); }
-  }, 1000);
+
+function _startMoveCounter(){
+  _initMoves = (_currentStageData && _currentStageData.timeLimit) || 15;
+  _movesLeft  = _initMoves;
+  _updateMovesHUD();
 }
-function resumeCountdown(){
-  clearInterval(cdInterval);
-  _updateCenterTimer();
-  cdInterval = setInterval(()=>{
-    cdRemain--;
-    document.getElementById('timer').textContent = Math.max(0, Math.ceil(cdRemain));
-    _updateCenterTimer();
-    if(cdRemain <= 10 && !muted){
-      soundChikutaku();
-      if(cdRemain <= 5){ setTimeout(soundChikutaku, 500); }
-      if(cdRemain <= 3){ setTimeout(soundChikutaku, 250); setTimeout(soundChikutaku, 750); }
-    }
-    if(cdRemain <= 0){ clearInterval(cdInterval); onTimeout(); }
-  }, 1000);
-}
-function onTimeout(){
-  clearInterval(cdInterval);
-  triggerDamageEffect('TIME!!');
-  charReact('bad');
-  speakAI('timeout', null);
-  setTimeout(()=>triggerGameOver('時間切れ'), 800);
-}
+
+// 互換（旧コードの clearInterval(cdInterval) 等が残っていても無害）
+function startCountdown(){ _startMoveCounter(); }
+function resumeCountdown(){ /* 手順制では不要 */ }
 
 // ══ ゲーム状態 ══════════════════════════════════════════
 let deck=[],board=[],sel=[],score=0,t0,ti;
@@ -2700,9 +2675,8 @@ let _gridSize = 9;
 function startGame(){
   playBGM('puzzle');
   _submitting = false;
-  // ステージメタから制限時間・パネル数を取得
-  _initTime = (_currentStageData && _currentStageData.timeLimit) || 180;
-  _gridSize  = (_currentStageData && _currentStageData.panels)    || 9;
+  // ステージメタから手順数・パネル数を取得
+  _gridSize = (_currentStageData && _currentStageData.panels) || 9;
   // ステージカウンタリセット
   _stageSanzetsuCount = 0;
   _stageNizetsuCount  = 0;
@@ -2969,7 +2943,7 @@ function submit(){
     if(diff === 2) { _stageNizetsuCount++;  _updateCondDisplay(); }
     if(diff === 3) { _stageSanzetsuCount++; _updateCondDisplay(); }
     document.getElementById('score').textContent = score;
-    addTime(time);
+    _addMoves(-1); // セット成功 → 1手消費
     charReact('good');
     soundZuba();
     setTimeout(soundCorrect, 120);
@@ -2984,12 +2958,14 @@ function submit(){
       sel=[];
       const remaining = board.filter(c=>c!=null);
       if(remaining.length===0||(findSets(remaining).length===0&&deck.length===0)){gameOver();return;}
+      // 手順切れチェック（カードが残っていても手数が尽きたらゲームオーバー）
+      if(_movesLeft <= 0){ triggerGameOver('手順数が尽きました'); return; }
       render();dots();
       _submitting = false;
     },650);
   }else{
     sel.forEach(i=>cards[i].classList.add('wrong'));
-    addTime(-3); // ミスで-3秒
+    // ミスは手順を消費しない（セット不成立は選び直せる）
     triggerDamageEffect('MISS!!');
     charReact('bad');
     soundWrong();

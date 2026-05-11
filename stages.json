@@ -5,7 +5,7 @@
     "panels": "初期パネル枚数",
     "label": "段位名",
     "subtitle": "副題",
-    "timeLimit": "制限秒数",
+    "timeLimit": "制限手順数（セット成功1回につき1手消費）",
     "clearConditions": {
       "sanzetsu": "必要な三絶回数（0=条件なし）",
       "nizetsu": "必要な二絶回数（0=条件なし）"
@@ -24,7 +24,7 @@
   "a": [
     {
       "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓",
-      "timeLimit": 240,
+      "timeLimit": 15,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
       "opening": [
         "：お邪魔します",
@@ -58,125 +58,111 @@
     },
     {
       "id": 2, "panels": 4, "label": "二の段", "subtitle": "四枚卓",
-      "timeLimit": 90,
+      "timeLimit": 15,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓",
-      "timeLimit": 200,
+      "timeLimit": 14,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 4, "panels": 5, "label": "四の段", "subtitle": "五枚卓",
-      "timeLimit": 90,
+      "timeLimit": 15,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",
-      "timeLimit": 180,
+      "timeLimit": 14,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 0 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 6, "panels": 6, "label": "六の段", "subtitle": "六枚卓",
-      "timeLimit": 120,
+      "timeLimit": 15,
       "clearConditions": { "sanzetsu": 0, "nizetsu": 1 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 7, "panels": 8, "label": "七の段", "subtitle": "八枚卓",
-      "timeLimit": 150,
+      "timeLimit": 16,
       "clearConditions": { "sanzetsu": 1, "nizetsu": 0 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     },
     {
       "id": 8, "panels": 9, "label": "八の段", "subtitle": "九枚卓",
-      "timeLimit": 120,
+      "timeLimit": 18,
       "clearConditions": { "sanzetsu": 1, "nizetsu": 2 },
-      "opening": null,
-      "ending": null,
-      "lines": null
+      "opening": null, "ending": null, "lines": null
     }
   ],
 
   "b": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ],
 
   "c": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ],
 
   "d": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ],
 
   "e": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ],
 
   "f": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ],
 
   "g": [
-    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 240, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 200, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 90,  "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 180, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
-    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 150, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
-    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 120, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
+    { "id": 1, "panels": 16, "label": "一の段", "subtitle": "十六枚卓", "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 2, "panels": 4,  "label": "二の段", "subtitle": "四枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 3, "panels": 12, "label": "三の段", "subtitle": "十二枚卓", "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 4, "panels": 5,  "label": "四の段", "subtitle": "五枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 5, "panels": 10, "label": "五の段", "subtitle": "十枚卓",   "timeLimit": 14, "clearConditions": { "sanzetsu": 0, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 6, "panels": 6,  "label": "六の段", "subtitle": "六枚卓",   "timeLimit": 15, "clearConditions": { "sanzetsu": 0, "nizetsu": 1 }, "opening": null, "ending": null, "lines": null },
+    { "id": 7, "panels": 8,  "label": "七の段", "subtitle": "八枚卓",   "timeLimit": 16, "clearConditions": { "sanzetsu": 1, "nizetsu": 0 }, "opening": null, "ending": null, "lines": null },
+    { "id": 8, "panels": 9,  "label": "八の段", "subtitle": "九枚卓",   "timeLimit": 18, "clearConditions": { "sanzetsu": 1, "nizetsu": 2 }, "opening": null, "ending": null, "lines": null }
   ]
 }
